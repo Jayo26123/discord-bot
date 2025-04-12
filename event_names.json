@@ -1,0 +1,23 @@
+{
+    "KINGDOM_WAR_FLAG_EVENT": "Kingdom War Flag",
+    "DUNGEON_COOLDOWN_EVENT": "Dungeon Cooldown",
+    "BEGINNER_EVENT": "Beginner Event",
+    "COMEBACK_EVENT": "Comeback Event",
+    "SEASONAL_EVENT": "Seasonal Event",
+    "ENCHANT_EVENT": "Enchant Event",
+    "OX_EVENT": "OX Event",
+    "DOJANG_CLASIC_EVENT": "Dojang Clasic",
+    "DOJANG_UNIVERSAL_EVENT": "Dojang Universal",
+    "PVM_EVENT": "PvM Event",
+    "COLLECT_LETTERS_EVENT": "Collect Letters Event",
+    "SYMBOL_EVENT": "Symbol Hunt Event",
+    "DESTINYSWHEEL_EVENT": "Destiny's Wheel Event",
+    "JIGSAW_EVENT": "Jigsaw Puzzle Event",
+    "BLACK_JACK_EVENT": "Black Jack Event",
+    "STONE_POWER_EVENT": "Stone Power Event",
+    "BOSS_POWER_EVENT": "Boss Power Event",
+    "CALENDAR_OKEY_EVENT": "Okey Event Event",
+    "DUNGEON_PASS_EVENT": "Dungeon Pass Event",
+    "DOUBLE_DROP_STONE_EVENT": "Double Drop Stone",
+    "DOUBLE_DROP_BOSS_EVENT": "Double Drop Boss"
+}
