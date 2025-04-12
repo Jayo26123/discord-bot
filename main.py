@@ -3,6 +3,11 @@ from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 import json
 import pytz
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -92,5 +97,4 @@ async def on_ready():
     daily_event_post.start()
 
 # Tokenul botului
-bot.run(
-    "MTM2MDMxODc0NDkzNjU4MzM3OQ.G4ZT4m.SHCU73OytqGpRc9Yc28tjn1QunwMgi7Top1E2k")
+bot.run(TOKEN)
