@@ -5,6 +5,7 @@ import json
 import pytz
 import os
 from dotenv import load_dotenv
+from keep_alive import keep_alive
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -95,6 +96,8 @@ async def daily_event_post():
 async def on_ready():
     print(f"Logged in as {bot.user}")
     daily_event_post.start()
+
+keep_alive()
 
 # Tokenul botului
 bot.run(TOKEN)
