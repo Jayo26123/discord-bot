@@ -88,7 +88,7 @@ async def event(ctx, day: int):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=10, minute=40, second=0, microsecond=0)
+    target_time = now.replace(hour=10, minute=00, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
