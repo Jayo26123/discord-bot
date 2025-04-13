@@ -41,7 +41,18 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
+# ✅ Decorator pentru mai multe roluri permise
+from discord.ext.commands import CheckFailure
+
+def has_any_role(*role_names):
+    async def predicate(ctx):
+        if any(role.name in role_names for role in ctx.author.roles):
+            return True
+        raise CheckFailure("Nu ai rolul necesar pentru a folosi această comandă.")
+    return commands.check(predicate)
+
 @bot.command()
+@has_any_role("𝐆𝐚𝐦𝐞 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫", "Senior Game Master", "Discord Manager", "Game Master")  # 🔁 Aici adaugi rolurile permise
 async def eventnow(ctx):
     now = datetime.now(romania_tz)
     day = now.day
@@ -57,6 +68,7 @@ async def eventnow(ctx):
         await ctx.send(f"There are no events today.")
 
 @bot.command()
+@has_any_role("𝐆𝐚𝐦𝐞 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫", "Senior Game Master", "Discord Manager", "Game Master")  # 🔁 Și aici adaugi aceleași roluri
 async def event(ctx, day: int):
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
@@ -76,10 +88,10 @@ async def event(ctx, day: int):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=17, minute=48, second=0, microsecond=0)
+    target_time = now.replace(hour=10, minute=40, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1360321533678981332)  # înlocuiește cu ID-ul canalului tău
+        channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
         day = now.day
         month = now.strftime('%B')
         events_today = check_events_for_day(day)
@@ -88,6 +100,8 @@ async def daily_event_post():
             for event in events_today:
                 embed.add_field(name="\u200b", value=event, inline=False)
             embed.set_footer(text="Event posted automatically")
+
+            await channel.send("@everyone")  # 👈 tag pentru notificare
             await channel.send(embed=embed)
         else:
             await channel.send("There are no events today.")
@@ -97,7 +111,13 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     daily_event_post.start()
 
-keep_alive()
+# 🔔 Dacă cineva fără rol încearcă comanda, trimite mesaj de eroare
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, CheckFailure):
+        await ctx.send("⚠️ You have no permission.")
+    else:
+        raise error  # Lasă alte erori să fie vizibile în consolă
 
-# Tokenul botului
+keep_alive()
 bot.run(TOKEN)
