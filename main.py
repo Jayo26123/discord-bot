@@ -1,5 +1,6 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import tasks
+from discord import app_commands
 from datetime import datetime, timedelta
 import json
 import pytz
@@ -12,7 +13,8 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = discord.Client(intents=intents)
+tree = app_commands.CommandTree(bot)
 
 romania_tz = pytz.timezone('Europe/Bucharest')
 
@@ -41,8 +43,9 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
-@bot.command()
-async def eventnow(ctx):
+# ---- Slash command: /eventnow
+@tree.command(name="eventnow", description="Shows today's events")
+async def eventnow(interaction: discord.Interaction):
     now = datetime.now(romania_tz)
     day = now.day
     month = now.strftime('%B')
@@ -52,12 +55,14 @@ async def eventnow(ctx):
         for event in events_today:
             embed.add_field(name="\u200b", value=event, inline=False)
         embed.set_footer(text="Event posted automatically")
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
-        await ctx.send(f"There are no events today.")
+        await interaction.response.send_message("There are no events today.", ephemeral=True)
 
-@bot.command()
-async def event(ctx, day: int):
+# ---- Slash command: /event <day>
+@tree.command(name="event", description="Show events for a specific day")
+@app_commands.describe(day="Day of the month (1-31)")
+async def event(interaction: discord.Interaction, day: int):
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
     if 1 <= day <= 31:
@@ -67,12 +72,13 @@ async def event(ctx, day: int):
             for event in events_today:
                 embed.add_field(name="\u200b", value=event, inline=False)
             embed.set_footer(text="Event posted automatically")
-            await ctx.send(embed=embed)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
-            await ctx.send(f"There are no events on {day} {month}.")
+            await interaction.response.send_message(f"There are no events on {day} {month}.", ephemeral=True)
     else:
-        await ctx.send("Please provide a valid day between 1 and 31.")
+        await interaction.response.send_message("Please provide a valid day between 1 and 31.", ephemeral=True)
 
+# ---- Daily Event Poster
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
@@ -89,17 +95,23 @@ async def daily_event_post():
                 embed.add_field(name="\u200b", value=event, inline=False)
             embed.set_footer(text="Event posted automatically")
 
-            await channel.send("@everyone")  # 👈 tag here
+            await channel.send("@everyone")
             await channel.send(embed=embed)
         else:
             await channel.send("There are no events today.")
 
+# ---- On Ready
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    try:
+        synced = await tree.sync()
+        print(f"Synced {len(synced)} slash commands")
+    except Exception as e:
+        print(f"Error syncing commands: {e}")
     daily_event_post.start()
 
 keep_alive()
 
-# Tokenul botului
+# ---- Start bot
 bot.run(TOKEN)
