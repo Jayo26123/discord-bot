@@ -12,6 +12,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 romania_tz = pytz.timezone('Europe/Bucharest')
@@ -41,35 +42,33 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
-# ✅ Decorator pentru mai multe roluri permise
-from discord.ext.commands import CheckFailure
-
-def has_any_role(*role_names):
-    async def predicate(ctx):
-        if any(role.name in role_names for role in ctx.author.roles):
-            return True
-        raise CheckFailure("Nu ai rolul necesar pentru a folosi această comandă.")
-    return commands.check(predicate)
-
 @bot.command()
-@has_any_role("𝐆𝐚𝐦𝐞 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫", "Senior Game Master", "Discord Manager", "Game Master")  # 🔁 Aici adaugi rolurile permise
 async def eventnow(ctx):
+    allowed_roles = ["𝐆𝐚𝐦𝐞 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫", "Senior Game Master", "Discord Manager", "Game Master"]  # Add your allowed roles here
+    if not any(role.name in allowed_roles for role in ctx.author.roles):
+        await ctx.send("⛔ You do not have permission to use this command.")
+        return
+
     now = datetime.now(romania_tz)
     day = now.day
     month = now.strftime('%B')
     events_today = check_events_for_day(day)
     if events_today:
-        embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
+        embed = discord.Embed(title=f"Today's Events - {day} {month}", color=discord.Color.blue())
         for event in events_today:
             embed.add_field(name="\u200b", value=event, inline=False)
-        embed.set_footer(text="Event posted automatically")
+        embed.set_footer(text="Event posted manually")
         await ctx.send(embed=embed)
     else:
-        await ctx.send(f"There are no events today.")
+        await ctx.send("There are no events today.")
 
 @bot.command()
-@has_any_role("𝐆𝐚𝐦𝐞 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫", "Senior Game Master", "Discord Manager", "Game Master")  # 🔁 Și aici adaugi aceleași roluri
 async def event(ctx, day: int):
+    allowed_roles = ["𝐆𝐚𝐦𝐞 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫", "Senior Game Master", "Discord Manager", "Game Master"]  # Add your allowed roles here
+    if not any(role.name in allowed_roles for role in ctx.author.roles):
+        await ctx.send("⛔ You do not have permission to use this command.")
+        return
+
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
     if 1 <= day <= 31:
@@ -78,30 +77,30 @@ async def event(ctx, day: int):
             embed = discord.Embed(title=f"Events on {day} {month}", color=discord.Color.blue())
             for event in events_today:
                 embed.add_field(name="\u200b", value=event, inline=False)
-            embed.set_footer(text="Event posted automatically")
+            embed.set_footer(text="Event posted manually")
             await ctx.send(embed=embed)
         else:
             await ctx.send(f"There are no events on {day} {month}.")
     else:
-        await ctx.send("Please provide a valid day between 1 and 31.")
+        await ctx.send("⚠️ Please provide a valid day between 1 and 31.")
 
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=10, minute=00, second=0, microsecond=0)
+    target_time = now.replace(hour=10, minute=40, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
+        channel = bot.get_channel(1043088073736585216)  # replace with your channel ID
         day = now.day
         month = now.strftime('%B')
         events_today = check_events_for_day(day)
         if events_today:
-            embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
+            embed = discord.Embed(title=f"Today's Events - {day} {month}", color=discord.Color.blue())
             for event in events_today:
                 embed.add_field(name="\u200b", value=event, inline=False)
             embed.set_footer(text="Event posted automatically")
 
-            await channel.send("@everyone")  # 👈 tag pentru notificare
+            await channel.send("@everyone")
             await channel.send(embed=embed)
         else:
             await channel.send("There are no events today.")
@@ -111,13 +110,6 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     daily_event_post.start()
 
-# 🔔 Dacă cineva fără rol încearcă comanda, trimite mesaj de eroare
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, CheckFailure):
-        await ctx.send("⚠️ You have no permission.")
-    else:
-        raise error  # Lasă alte erori să fie vizibile în consolă
-
 keep_alive()
+
 bot.run(TOKEN)
