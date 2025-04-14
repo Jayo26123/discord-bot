@@ -1,5 +1,5 @@
 import discord
-from discord.ext import tasks
+from discord.ext import tasks, commands  # <-- adăugat "commands"
 from discord import app_commands
 from datetime import datetime, timedelta
 import json
@@ -13,7 +13,8 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = discord.Client(intents=intents)
+
+bot = commands.Bot(command_prefix="!", intents=intents)  # <-- modificat aici
 tree = app_commands.CommandTree(bot)
 
 romania_tz = pytz.timezone('Europe/Bucharest')
@@ -82,7 +83,7 @@ async def event(interaction: discord.Interaction, day: int):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=16, minute=36, second=0, microsecond=0)
+    target_time = now.replace(hour=16, minute=44, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
