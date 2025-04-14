@@ -91,7 +91,7 @@ async def daily_event_post():
     target_time = now.replace(hour=10, minute=00, second=0, microsecond=0)
     if target_time <= now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1361368221244063755)
+        channel = bot.get_channel(1043088073736585216)
         if not channel:
             print("Channel not found!")
             return
