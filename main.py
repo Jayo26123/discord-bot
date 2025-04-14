@@ -56,8 +56,8 @@ async def eventnow(interaction: discord.Interaction):
     if events_today:
         embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
         for event in events_today:
-            embed.add_field(name="\u200b", value=event, inline=False)
-            embed.add_field(name="\u200b", value="-----------------------", inline=False)
+                embed.add_field(name="\u200b", value=event, inline=True)
+                embed.add_field(name="\u200b", value="━━━━━━━━⊱⋆⊰━━━━━━━━", inline=True)
         embed.set_footer(text="Event posted automatically")
         await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
@@ -74,8 +74,8 @@ async def event(interaction: discord.Interaction, day: int):
         if events_today:
             embed = discord.Embed(title=f"Events on {day} {month}", color=discord.Color.blue())
             for event in events_today:
-                embed.add_field(name="\u200b", value=event, inline=False)
-                embed.add_field(name="\u200b", value="-----------------------", inline=False)
+                embed.add_field(name="\u200b", value=event, inline=True)
+                embed.add_field(name="\u200b", value="━━━━━━━━⊱⋆⊰━━━━━━━━", inline=True)
             embed.set_footer(text="Event posted automatically")
             await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
@@ -87,18 +87,18 @@ async def event(interaction: discord.Interaction, day: int):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=19, minute=16, second=0, microsecond=0)
+    target_time = now.replace(hour=19, minute=25, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
+        channel = bot.get_channel(1361368221244063755)  # înlocuiește cu ID-ul canalului tău
         day = now.day
         month = now.strftime('%B')
         events_today = check_events_for_day(day)
         if events_today:
             embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
             for event in events_today:
-                embed.add_field(name="\u200b", value=event, inline=False)
-                embed.add_field(name="\u200b", value="-----------------------", inline=False)
+                embed.add_field(name="\u200b", value=event, inline=True)
+                embed.add_field(name="\u200b", value="━━━━━━━━⊱⋆⊰━━━━━━━━", inline=True)
             embed.set_footer(text="Event posted automatically")
 
             await channel.send(f"@everyone\n", embed=embed)
