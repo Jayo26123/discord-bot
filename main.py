@@ -1,5 +1,5 @@
 import discord
-from discord.ext import tasks
+from discord.ext import tasks, commands
 from discord import app_commands
 from datetime import datetime, timedelta
 import json
@@ -11,13 +11,11 @@ from keep_alive import keep_alive
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-# Folosim discord.Client, dar adăugăm un obiect pentru comenzi
 intents = discord.Intents.default()
 intents.message_content = True
-bot = discord.Client(intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)  # Folosim commands.Bot
 
-# Creează CommandTree folosind botul Client
-tree = app_commands.CommandTree(bot)
+tree = bot.tree  # Accesăm tree-ul de comenzi slash
 
 romania_tz = pytz.timezone('Europe/Bucharest')
 
@@ -46,9 +44,9 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
-# ---- Slash command: /eventnow
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     day = now.day
     month = now.strftime('%B')
@@ -56,17 +54,16 @@ async def eventnow(interaction: discord.Interaction):
     if events_today:
         embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
         for event in events_today:
-                embed.add_field(name="\u200b", value=event, inline=True)
-                embed.add_field(name="\u200b", value="━━━━━━━━⊱⋆⊰━━━━━━━━", inline=True)
+            embed.add_field(name="\u200b", value=event + "\n━━━━━━━━⊱⋆⊰━━━━━━━━", inline=False)
         embed.set_footer(text="Event posted automatically")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
     else:
-        await interaction.response.send_message("There are no events today.", ephemeral=True)
+        await interaction.followup.send("There are no events today.", ephemeral=True)
 
-# ---- Slash command: /event <day>
 @tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1-31)")
 async def event(interaction: discord.Interaction, day: int):
+    await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
     if 1 <= day <= 31:
@@ -74,52 +71,47 @@ async def event(interaction: discord.Interaction, day: int):
         if events_today:
             embed = discord.Embed(title=f"Events on {day} {month}", color=discord.Color.blue())
             for event in events_today:
-                embed.add_field(name="\u200b", value=event, inline=True)
-                embed.add_field(name="\u200b", value="━━━━━━━━⊱⋆⊰━━━━━━━━", inline=True)
+                embed.add_field(name="\u200b", value=event + "\n━━━━━━━━⊱⋆⊰━━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
         else:
-            await interaction.response.send_message(f"There are no events on {day} {month}.", ephemeral=True)
+            await interaction.followup.send(f"There are no events on {day} {month}.", ephemeral=True)
     else:
-        await interaction.response.send_message("Please provide a valid day between 1 and 31.", ephemeral=True)
+        await interaction.followup.send("Please provide a valid day between 1 and 31.", ephemeral=True)
 
-# ---- Daily Event Poster
+@tree.command(name="checktime", description="Shows the current time in the bot's timezone")
+async def check_time(interaction: discord.Interaction):
+    now = datetime.now(romania_tz)
+    formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')
+    await interaction.response.send_message(f"Current time (Romania timezone): {formatted_time}", ephemeral=True)
+
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=19, minute=25, second=0, microsecond=0)
-    if now >= target_time and now < target_time + timedelta(minutes=1):
+    target_time = now.replace(hour=19, minute=30, second=0, microsecond=0)
+    if target_time <= now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1361368221244063755)  # înlocuiește cu ID-ul canalului tău
+        channel = bot.get_channel(1361368221244063755)
+        if not channel:
+            print("Channel not found!")
+            return
+
         day = now.day
         month = now.strftime('%B')
         events_today = check_events_for_day(day)
         if events_today:
             embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
             for event in events_today:
-                embed.add_field(name="\u200b", value=event, inline=True)
-                embed.add_field(name="\u200b", value="━━━━━━━━⊱⋆⊰━━━━━━━━", inline=True)
+                embed.add_field(name="\u200b", value=event + "\n━━━━━━━━⊱⋆⊰━━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
-
-            await channel.send(f"@everyone\n", embed=embed)
+            await channel.send("@everyone", embed=embed)
         else:
             await channel.send("There are no events today.")
 
-# ---- Slash command: /checktime
-@tree.command(name="checktime", description="Shows the current time in the bot's timezone")
-async def check_time(interaction: discord.Interaction):
-    now = datetime.now(romania_tz)  # Obținem timpul curent în zona orară a României
-    formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')  # Formatează timpul în formatul dorit
-
-    # Răspundem cu un mesaj ce conține timpul curent
-    await interaction.response.send_message(f"Current time (Romania timezone): {formatted_time}", ephemeral=True)
-
-# ---- On Ready
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
     try:
-        # Sincronizează comenzile cu Discord
         synced = await tree.sync()
         print(f"Synced {len(synced)} slash commands")
     except Exception as e:
@@ -127,6 +119,4 @@ async def on_ready():
     daily_event_post.start()
 
 keep_alive()
-
-# ---- Start bot
 bot.run(TOKEN)
