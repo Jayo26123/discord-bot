@@ -88,7 +88,7 @@ async def check_time(interaction: discord.Interaction):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=19, minute=30, second=0, microsecond=0)
+    target_time = now.replace(hour=19, minute=34, second=0, microsecond=0)
     if target_time <= now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1361368221244063755)
