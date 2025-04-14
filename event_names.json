@@ -1,23 +1,84 @@
 {
-    "KINGDOM_WAR_FLAG_EVENT": "Kingdom War Flag",
-    "DUNGEON_COOLDOWN_EVENT": "Dungeon Cooldown",
-    "BEGINNER_EVENT": "Beginner Event",
-    "COMEBACK_EVENT": "Comeback Event",
-    "SEASONAL_EVENT": "Seasonal Event",
-    "ENCHANT_EVENT": "Enchant Event",
-    "OX_EVENT": "OX Event",
-    "DOJANG_CLASIC_EVENT": "Dojang Clasic",
-    "DOJANG_UNIVERSAL_EVENT": "Dojang Universal",
-    "PVM_EVENT": "PvM Event",
-    "COLLECT_LETTERS_EVENT": "Collect Letters Event",
-    "SYMBOL_EVENT": "Symbol Hunt Event",
-    "DESTINYSWHEEL_EVENT": "Destiny's Wheel Event",
-    "JIGSAW_EVENT": "Jigsaw Puzzle Event",
-    "BLACK_JACK_EVENT": "Black Jack Event",
-    "STONE_POWER_EVENT": "Stone Power Event",
-    "BOSS_POWER_EVENT": "Boss Power Event",
-    "CALENDAR_OKEY_EVENT": "Okey Event Event",
-    "DUNGEON_PASS_EVENT": "Dungeon Pass Event",
-    "DOUBLE_DROP_STONE_EVENT": "Double Drop Stone",
-    "DOUBLE_DROP_BOSS_EVENT": "Double Drop Boss"
+  "ADVENTCALENDAR_EVENT": "Advent Calendar Event",
+  "BEGINNER_EVENT": "Beginner Event",
+  "BLACK_JACK_EVENT": "Black Jack Event",
+  "BOSS_POWER_EVENT": "Boss Power Event",
+  "CALENDAR_OKEY_EVENT": "Calendar Okey Event",
+  "COLLECT_LETTERS_EVENT": "Collect Letters Event",
+  "COMBAT_ZONE_EVENT": "Combat Zone Event",
+  "COMEBACK_EVENT": "Comeback Event",
+  "DESTINYSWHEEL_EVENT": "Destinyswheel Event",
+  "DOJANG35_CLASIC_EVENT": "Dojang35 Clasic Event",
+  "DOJANG35_UNIVERSAL_EVENT": "Dojang35 Universal Event",
+  "DOJANG75_CLASIC_EVENT": "Dojang75 Clasic Event",
+  "DOJANG75_UNIVERSAL_EVENT": "Dojang75 Universal Event",
+  "DOJANG_CLASIC_EVENT": "Dojang Clasic Event",
+  "DOJANG_UNIVERSAL_EVENT": "Dojang Universal Event",
+  "DOUBLE_BOSS_SPAWN_EVENT": "Double Boss Spawn Event",
+  "DOUBLE_DROP_BOSS_EVENT": "Double Drop Boss Event",
+  "DOUBLE_DROP_FISHING_EVENT": "Double Drop Fishing Event",
+  "DOUBLE_DROP_STONE_EVENT": "Double Drop Stone Event",
+  "DOUBLE_STONE_SPAWN_EVENT": "Double Stone Spawn Event",
+  "DUNGEON_COOLDOWN_EVENT": "Dungeon Cooldown Event",
+  "DUNGEON_PASS_DISCOUNT_EVENT": "Dungeon Pass Discount Event",
+  "DUNGEON_PASS_EVENT": "Dungeon Pass Event",
+  "ELF_HUNT_EVENT": "Elf Hunt Event",
+  "ENCHANT_EVENT": "Enchant Event",
+  "FESTIVE_CHEST_EVENT": "Festive Chest Event",
+  "FOX_HUNT_EVENT": "Fox Hunt Event",
+  "GOLDEN_FROG_EVENT": "Golden Frog Event",
+  "GUILD_WARS_EVENT": "Guild Wars Event",
+  "JIGSAW_EVENT": "Jigsaw Event",
+  "MAGIC_CHEST_EVENT": "Magic Chest Event",
+  "OX_EVENT": "OX Event",
+  "PVM_EVENT": "PvM Event",
+  "PVP_EVENT": "PvP Event",
+  "RANDOM_WORD_EVENT": "Random Word Event",
+  "SANTAS_LOOT_EVENT": "Santas Loot Event",
+  "SEASONAL_EVENT": "Seasonal Event",
+  "STONE_POWER_EVENT": "Stone Power Event",
+  "SYMBOL_EVENT": "Symbol Event",
+  "TANAKA_EVENT": "Tanaka Event",
+  "WORLDCUP_EVENT": "Worldcup Event"
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
