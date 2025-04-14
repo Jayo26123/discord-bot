@@ -1,5 +1,5 @@
 import discord
-from discord.ext import tasks, commands  # <-- modificat aici
+from discord.ext import tasks, commands
 from discord import app_commands
 from datetime import datetime, timedelta
 import json
@@ -14,9 +14,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 
-# Modificat din discord.Client la commands.Bot
-bot = commands.Bot(command_prefix="!", intents=intents)  
-tree = app_commands.CommandTree(bot)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 romania_tz = pytz.timezone('Europe/Bucharest')
 
@@ -46,7 +44,7 @@ def check_events_for_day(day):
     return events_today
 
 # ---- Slash command: /eventnow
-@tree.command(name="eventnow", description="Shows today's events")
+@bot.tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
     now = datetime.now(romania_tz)
     day = now.day
@@ -62,7 +60,7 @@ async def eventnow(interaction: discord.Interaction):
         await interaction.response.send_message("There are no events today.", ephemeral=True)
 
 # ---- Slash command: /event <day>
-@tree.command(name="event", description="Show events for a specific day")
+@bot.tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1-31)")
 async def event(interaction: discord.Interaction, day: int):
     now = datetime.now(romania_tz)
@@ -84,8 +82,8 @@ async def event(interaction: discord.Interaction, day: int):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    print(f"[DEBUG] Task tick at {now.strftime('%H:%M:%S')}")  # Debug line pentru a vedea când rulează task-ul
-    target_time = now.replace(hour=16, minute=48, second=0, microsecond=0)
+    print(f"[DEBUG] Task tick at {now.strftime('%H:%M:%S')}")
+    target_time = now.replace(hour=16, minute=36, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
@@ -108,11 +106,12 @@ async def daily_event_post():
 async def on_ready():
     print(f"Logged in as {bot.user}")
     try:
-        synced = await tree.sync()
-        print(f"Synced {len(synced)} slash commands")
+        # Sincronizare comenzi slash
+        await bot.tree.sync()
+        print("Slash commands synced.")
     except Exception as e:
         print(f"Error syncing commands: {e}")
-    daily_event_post.start()  # Pornește task-ul la logarea botului
+    daily_event_post.start()
 
 keep_alive()
 
