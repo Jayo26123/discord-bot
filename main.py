@@ -1,5 +1,5 @@
 import discord
-from discord.ext import tasks, commands
+from discord.ext import tasks
 from discord import app_commands
 from datetime import datetime, timedelta
 import json
@@ -13,8 +13,8 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = discord.Client(intents=intents)
+tree = app_commands.CommandTree(bot)
 
 romania_tz = pytz.timezone('Europe/Bucharest')
 
@@ -44,7 +44,7 @@ def check_events_for_day(day):
     return events_today
 
 # ---- Slash command: /eventnow
-@bot.tree.command(name="eventnow", description="Shows today's events")
+@tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
     now = datetime.now(romania_tz)
     day = now.day
@@ -60,7 +60,7 @@ async def eventnow(interaction: discord.Interaction):
         await interaction.response.send_message("There are no events today.", ephemeral=True)
 
 # ---- Slash command: /event <day>
-@bot.tree.command(name="event", description="Show events for a specific day")
+@tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1-31)")
 async def event(interaction: discord.Interaction, day: int):
     now = datetime.now(romania_tz)
@@ -78,23 +78,14 @@ async def event(interaction: discord.Interaction, day: int):
     else:
         await interaction.response.send_message("Please provide a valid day between 1 and 31.", ephemeral=True)
 
-@bot.tree.command(name="checktime", description="Shows the current time in the bot's timezone")
-async def check_time(interaction: discord.Interaction):
-    now = datetime.now(romania_tz)  # Obținem timpul curent în zona orară a României
-    formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')  # Formatează timpul în formatul dorit
-
-    # Răspundem cu un mesaj ce conține timpul curent
-    await interaction.response.send_message(f"Current time (Romania timezone): {formatted_time}", ephemeral=True)
-
 # ---- Daily Event Poster
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    print(f"[DEBUG] Task tick at {now.strftime('%H:%M:%S')}")
-    target_time = now.replace(hour=16, minute=57, second=0, microsecond=0)
+    target_time = now.replace(hour=19, minute=0, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1361368221244063755)  # înlocuiește cu ID-ul canalului tău
+        channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
         day = now.day
         month = now.strftime('%B')
         events_today = check_events_for_day(day)
@@ -109,14 +100,21 @@ async def daily_event_post():
         else:
             await channel.send("There are no events today.")
 
+@bot.tree.command(name="checktime", description="Shows the current time in the bot's timezone")
+async def check_time(interaction: discord.Interaction):
+    now = datetime.now(romania_tz)  # Obținem timpul curent în zona orară a României
+    formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')  # Formatează timpul în formatul dorit
+
+    # Răspundem cu un mesaj ce conține timpul curent
+    await interaction.response.send_message(f"Current time (Romania timezone): {formatted_time}", ephemeral=True)
+
 # ---- On Ready
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
     try:
-        # Sincronizare comenzi slash
-        await bot.tree.sync()
-        print("Slash commands synced.")
+        synced = await tree.sync()
+        print(f"Synced {len(synced)} slash commands")
     except Exception as e:
         print(f"Error syncing commands: {e}")
     daily_event_post.start()
