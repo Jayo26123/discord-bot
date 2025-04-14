@@ -11,10 +11,12 @@ from keep_alive import keep_alive
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-# Folosește discord.Bot în loc de discord.Client
+# Folosim discord.Client, dar adăugăm un obiect pentru comenzi
 intents = discord.Intents.default()
 intents.message_content = True
-bot = discord.Bot(intents=intents)  # Aici s-a făcut schimbarea
+bot = discord.Client(intents=intents)
+
+# Creează CommandTree folosind botul Client
 tree = app_commands.CommandTree(bot)
 
 romania_tz = pytz.timezone('Europe/Bucharest')
@@ -85,7 +87,7 @@ async def event(interaction: discord.Interaction, day: int):
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=19, minute=9, second=0, microsecond=0)
+    target_time = now.replace(hour=19, minute=16, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
@@ -104,7 +106,7 @@ async def daily_event_post():
             await channel.send("There are no events today.")
 
 # ---- Slash command: /checktime
-@bot.tree.command(name="checktime", description="Shows the current time in the bot's timezone")
+@tree.command(name="checktime", description="Shows the current time in the bot's timezone")
 async def check_time(interaction: discord.Interaction):
     now = datetime.now(romania_tz)  # Obținem timpul curent în zona orară a României
     formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')  # Formatează timpul în formatul dorit
@@ -117,7 +119,8 @@ async def check_time(interaction: discord.Interaction):
 async def on_ready():
     print(f"Logged in as {bot.user}")
     try:
-        synced = await bot.tree.sync()
+        # Sincronizează comenzile cu Discord
+        synced = await tree.sync()
         print(f"Synced {len(synced)} slash commands")
     except Exception as e:
         print(f"Error syncing commands: {e}")
