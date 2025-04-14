@@ -79,10 +79,10 @@ async def event(interaction: discord.Interaction, day: int):
         await interaction.response.send_message("Please provide a valid day between 1 and 31.", ephemeral=True)
 
 # ---- Daily Event Poster
-tasks.loop(seconds=60)
+@tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=16, minute=32, second=0, microsecond=0)
+    target_time = now.replace(hour=16, minute=36, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
