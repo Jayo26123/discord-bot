@@ -79,10 +79,10 @@ async def event(interaction: discord.Interaction, day: int):
         await interaction.response.send_message("Please provide a valid day between 1 and 31.", ephemeral=True)
 
 # ---- Daily Event Poster
-@tasks.loop(seconds=60)
+tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=10, minute=40, second=0, microsecond=0)
+    target_time = now.replace(hour=16, minute=29, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
@@ -93,12 +93,13 @@ async def daily_event_post():
             embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
             for event in events_today:
                 embed.add_field(name="\u200b", value=event, inline=False)
+                embed.add_field(name="\u200b", value="-----------------------", inline=False)
             embed.set_footer(text="Event posted automatically")
 
-            await channel.send("@everyone")
-            await channel.send(embed=embed)
+            await channel.send(f"@everyone\n", embed=embed)
         else:
             await channel.send("There are no events today.")
+
 
 # ---- On Ready
 @bot.event
