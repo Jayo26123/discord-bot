@@ -54,7 +54,7 @@ async def eventnow(interaction: discord.Interaction):
     if events_today:
         embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
         for event in events_today:
-            embed.add_field(name="\u200b", value=event + "\n━━━━━━━━⊱⋆⊰━━━━━━━━", inline=False)
+            embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
         embed.set_footer(text="Event posted automatically")
         await interaction.followup.send(embed=embed, ephemeral=True)
     else:
@@ -71,7 +71,7 @@ async def event(interaction: discord.Interaction, day: int):
         if events_today:
             embed = discord.Embed(title=f"Events on {day} {month}", color=discord.Color.blue())
             for event in events_today:
-                embed.add_field(name="\u200b", value=event + "\n━━━━━━━━⊱⋆⊰━━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
@@ -102,7 +102,7 @@ async def daily_event_post():
         if events_today:
             embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
             for event in events_today:
-                embed.add_field(name="\u200b", value=event + "\n━━━━━━━━⊱⋆⊰━━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
         else:
