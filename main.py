@@ -91,7 +91,7 @@ async def check_time(interaction: discord.Interaction):
 async def daily_event_post():
     now = datetime.now(romania_tz)
     print(f"[DEBUG] Task tick at {now.strftime('%H:%M:%S')}")
-    target_time = now.replace(hour=16, minute=54, second=0, microsecond=0)
+    target_time = now.replace(hour=16, minute=57, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
         channel = bot.get_channel(1361368221244063755)  # înlocuiește cu ID-ul canalului tău
