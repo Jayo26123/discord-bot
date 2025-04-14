@@ -78,15 +78,23 @@ async def event(interaction: discord.Interaction, day: int):
     else:
         await interaction.response.send_message("Please provide a valid day between 1 and 31.", ephemeral=True)
 
+@bot.tree.command(name="checktime", description="Shows the current time in the bot's timezone")
+async def check_time(interaction: discord.Interaction):
+    now = datetime.now(romania_tz)  # Obținem timpul curent în zona orară a României
+    formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')  # Formatează timpul în formatul dorit
+
+    # Răspundem cu un mesaj ce conține timpul curent
+    await interaction.response.send_message(f"Current time (Romania timezone): {formatted_time}", ephemeral=True)
+
 # ---- Daily Event Poster
 @tasks.loop(seconds=60)
 async def daily_event_post():
     now = datetime.now(romania_tz)
     print(f"[DEBUG] Task tick at {now.strftime('%H:%M:%S')}")
-    target_time = now.replace(hour=16, minute=50, second=0, microsecond=0)
+    target_time = now.replace(hour=16, minute=54, second=0, microsecond=0)
     if now >= target_time and now < target_time + timedelta(minutes=1):
         print("Running daily_event_post task...")
-        channel = bot.get_channel(1043088073736585216)  # înlocuiește cu ID-ul canalului tău
+        channel = bot.get_channel(1361368221244063755)  # înlocuiește cu ID-ul canalului tău
         day = now.day
         month = now.strftime('%B')
         events_today = check_events_for_day(day)
