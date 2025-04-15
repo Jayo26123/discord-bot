@@ -101,12 +101,6 @@ async def help_event(interaction: discord.Interaction):
     embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-@tree.command(name="checktime", description="Shows the current time in the bot's timezone")
-async def check_time(interaction: discord.Interaction):
-    now = datetime.now(romania_tz)
-    formatted_time = now.strftime('%Y-%m-%d %H:%M:%S')
-    await interaction.response.send_message(f"Current time (Romania timezone): {formatted_time}", ephemeral=True)
-
 # === Task periodic: mesaj zilnic ===
 @tasks.loop(seconds=60)
 async def daily_event_post():
