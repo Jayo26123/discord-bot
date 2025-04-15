@@ -55,6 +55,10 @@ async def eventnow(interaction: discord.Interaction):
         embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
         for event in events_today:
             embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
+        
+        # 🎯 Banner image here:
+        embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+        
         embed.set_footer(text="Event posted automatically")
         await interaction.followup.send(embed=embed, ephemeral=True)
     else:
@@ -73,6 +77,10 @@ async def event(interaction: discord.Interaction, day: int):
             for event in events_today:
                 embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
+
+            # 🎯 Banner image here:
+            embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
             await interaction.followup.send(f"There are no events on {day} {month}.", ephemeral=True)
@@ -104,6 +112,10 @@ async def daily_event_post():
             for event in events_today:
                 embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
+
+            # 🎯 Banner image here:
+            embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+        
             await channel.send("@everyone", embed=embed)
         else:
             await channel.send("There are no events today.")
@@ -145,15 +157,14 @@ async def help_event(interaction: discord.Interaction):
 
     embed.add_field(
         name="`/event <day>`",
-        value="Displays events for the selected day (e.g. `/event Monday`).",
+        value="Displays events for the selected day (e.g. `/event 2`).",
         inline=False
     )
 
     embed.set_footer(text="Use these commands daily to stay informed about current events.")
     embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")  # optional icon
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
+    await interaction.followup.send(embed=embed)
 
 keep_alive()
 bot.run(TOKEN)
