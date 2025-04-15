@@ -58,7 +58,7 @@ async def eventnow(interaction: discord.Interaction):
         
         # 🎯 Banner image here:
         embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-        
+
         embed.set_footer(text="Event posted automatically")
         await interaction.followup.send(embed=embed, ephemeral=True)
     else:
@@ -86,6 +86,35 @@ async def event(interaction: discord.Interaction, day: int):
             await interaction.followup.send(f"There are no events on {day} {month}.", ephemeral=True)
     else:
         await interaction.followup.send("Please provide a valid day between 1 and 31.", ephemeral=True)
+
+# =======================
+# Slash Command: /helpevent
+# =======================
+
+@tree.command(name="helpevent", description="Displays information about event commands.")
+async def help_event(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="📅 Event Commands Help",
+        description="Use these commands to check today's or upcoming events:",
+        color=discord.Color.blurple()
+    )
+
+    embed.add_field(
+        name="`/eventnow`",
+        value="Shows all events happening **today**.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="`/event <day>`",
+        value="Displays events for the selected day (e.g. `/event 2`).",
+        inline=False
+    )
+
+    embed.set_footer(text="Use these commands daily to stay informed about current events.")
+    embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")  # optional icon
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @tree.command(name="checktime", description="Shows the current time in the bot's timezone")
 async def check_time(interaction: discord.Interaction):
@@ -136,35 +165,6 @@ async def on_ready():
     except Exception as e:
         print(f"Error syncing commands: {e}")
     daily_event_post.start()  # presupunem că funcția asta există
-
-# =======================
-# Slash Command: /helpevent
-# =======================
-
-@tree.command(name="helpevent", description="Displays information about event commands.")
-async def help_event(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="📅 Event Commands Help",
-        description="Use these commands to check today's or upcoming events:",
-        color=discord.Color.blurple()
-    )
-
-    embed.add_field(
-        name="`/eventnow`",
-        value="Shows all events happening **today**.",
-        inline=False
-    )
-
-    embed.add_field(
-        name="`/event <day>`",
-        value="Displays events for the selected day (e.g. `/event 2`).",
-        inline=False
-    )
-
-    embed.set_footer(text="Use these commands daily to stay informed about current events.")
-    embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")  # optional icon
-
-    await interaction.followup.send(embed=embed)
 
 keep_alive()
 bot.run(TOKEN)
