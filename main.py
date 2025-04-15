@@ -115,7 +115,7 @@ tree = bot.tree  # pentru slash commands
 
 @bot.event
 async def on_ready():
-    activity = discord.Game(name="/help")
+    activity = discord.Game(name="/helpevent")
     await bot.change_presence(status=discord.Status.online, activity=activity)
     print(f"Logged in as {bot.user}")
     try:
