@@ -66,11 +66,13 @@ async def eventnow(interaction: discord.Interaction):
         await interaction.followup.send("There are no events today.", ephemeral=True)
 
 @tree.command(name="event", description="Show events for a specific day")
-@app_commands.describe(day="Day of the month (1-31)")
-@app_commands.autocomplete(day=lambda interaction, current: [str(i) for i in range(1, 32) if str(i).startswith(current)])
-async def event(interaction: discord.Interaction, day: int):
+@app_commands.describe(day="Day of the month (1-31)")  # Nu mai folosi autocomplete
+async def event(interaction: discord.Interaction, day: int):  # Parametrul 'day' este acum int
+    await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
+
+    # Verificăm dacă numărul zilei este valid (1-31)
     if 1 <= day <= 31:
         events_today = check_events_for_day(day)
         if events_today:
@@ -78,15 +80,13 @@ async def event(interaction: discord.Interaction, day: int):
             for event in events_today:
                 embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_footer(text="Event posted automatically")
-
-            # 🎯 Banner image here:
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
             await interaction.followup.send(f"There are no events on {day} {month}.", ephemeral=True)
     else:
         await interaction.followup.send("Please provide a valid day between 1 and 31.", ephemeral=True)
+
 
 @tree.command(name="helpevent", description="Displays information about event commands.")
 async def help_event(interaction: discord.Interaction):
