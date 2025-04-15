@@ -66,22 +66,25 @@ async def eventnow(interaction: discord.Interaction):
         await interaction.followup.send("There are no events today.", ephemeral=True)
 
 @tree.command(name="event", description="Show events for a specific day")
-@app_commands.describe(d="Day of the month (1-31)")
-async def event(interaction: discord.Interaction, d: int):
-    await interaction.response.defer(ephemeral=True)
+@app_commands.describe(day="Day of the month (1-31)")
+@app_commands.autocomplete(day=lambda interaction, current: [str(i) for i in range(1, 32) if str(i).startswith(current)])
+async def event(interaction: discord.Interaction, day: int):
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
-    if 1 <= d <= 31:
-        events_today = check_events_for_day(d)
+    if 1 <= day <= 31:
+        events_today = check_events_for_day(day)
         if events_today:
-            embed = discord.Embed(title=f"Events on {d} {month}", color=discord.Color.blue())
+            embed = discord.Embed(title=f"Events on {day} {month}", color=discord.Color.blue())
             for event in events_today:
                 embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
-            embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
+
+            # 🎯 Banner image here:
+            embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
-            await interaction.followup.send(f"There are no events on {d} {month}.", ephemeral=True)
+            await interaction.followup.send(f"There are no events on {day} {month}.", ephemeral=True)
     else:
         await interaction.followup.send("Please provide a valid day between 1 and 31.", ephemeral=True)
 
