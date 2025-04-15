@@ -108,15 +108,52 @@ async def daily_event_post():
         else:
             await channel.send("There are no events today.")
 
+
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix="!", intents=intents)
+tree = bot.tree  # pentru slash commands
+
 @bot.event
 async def on_ready():
+    activity = discord.Game(name="/help")
+    await bot.change_presence(status=discord.Status.online, activity=activity)
     print(f"Logged in as {bot.user}")
     try:
         synced = await tree.sync()
         print(f"Synced {len(synced)} slash commands")
     except Exception as e:
         print(f"Error syncing commands: {e}")
-    daily_event_post.start()
+    daily_event_post.start()  # presupunem că funcția asta există
+
+# =======================
+# Slash Command: /helpevent
+# =======================
+
+@tree.command(name="helpevent", description="Displays information about event commands.")
+async def help_event(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="📅 Event Commands Help",
+        description="Use these commands to check today's or upcoming events:",
+        color=discord.Color.blurple()
+    )
+
+    embed.add_field(
+        name="`/eventnow`",
+        value="Shows all events happening **today**.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="`/event <day>`",
+        value="Displays events for the selected day (e.g. `/event Monday`).",
+        inline=False
+    )
+
+    embed.set_footer(text="Use these commands daily to stay informed about current events.")
+    embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")  # optional icon
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 keep_alive()
 bot.run(TOKEN)
