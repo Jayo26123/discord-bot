@@ -29,8 +29,29 @@ def load_event_names():
     with open("event_names.json", "r") as f:
         return json.load(f)
 
+def load_usage_log():
+    try:
+        if os.path.exists("command_usage.json"):
+            with open("command_usage.json", "r") as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+    except json.JSONDecodeError:
+        print("⚠️ Eroare la citirea command_usage.json – fișier invalid. Se reinitializează.")
+
+    return {"eventnow": 0, "event": 0, "helpevent": 0}
+
+def save_usage_log(log_data):
+    with open("command_usage.json", "w") as f:
+        json.dump(log_data, f, indent=4)
+
+def increment_usage(command_name):
+    usage_log[command_name] = usage_log.get(command_name, 0) + 1
+    save_usage_log(usage_log)
+
 calendar = load_calendar()
 event_names = load_event_names()
+usage_log = load_usage_log()
 
 def check_events_for_day(day):
     events_today = []
@@ -46,27 +67,11 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
-# === Funcții pentru log folosire comenzi ===
-def load_usage_log():
-    if os.path.exists("command_usage.json"):
-        with open("command_usage.json", "r") as f:
-            return json.load(f)
-    else:
-        return {"eventnow": 0, "event": 0, "helpevent": 0}
-
-def save_usage_log(log):
-    with open("command_usage.json", "w") as f:
-        json.dump(log, f, indent=4)
-
-usage_log = load_usage_log()
-
 # === Comenzi Slash ===
 
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
-    usage_log["eventnow"] += 1
-    save_usage_log(usage_log)
-
+    increment_usage("eventnow")
     await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     day = now.day
@@ -85,9 +90,7 @@ async def eventnow(interaction: discord.Interaction):
 @tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1-31)")
 async def event(interaction: discord.Interaction, day: int):
-    usage_log["event"] += 1
-    save_usage_log(usage_log)
-
+    increment_usage("event")
     await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
@@ -108,9 +111,7 @@ async def event(interaction: discord.Interaction, day: int):
 
 @tree.command(name="helpevent", description="Displays information about event commands.")
 async def help_event(interaction: discord.Interaction):
-    usage_log["helpevent"] += 1
-    save_usage_log(usage_log)
-
+    increment_usage("helpevent")
     embed = discord.Embed(
         title="📅 Event Commands Help",
         description="Use these commands to check today's or upcoming events:",
