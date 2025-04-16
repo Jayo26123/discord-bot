@@ -46,10 +46,27 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
+# === Funcții pentru log folosire comenzi ===
+def load_usage_log():
+    if os.path.exists("command_usage.json"):
+        with open("command_usage.json", "r") as f:
+            return json.load(f)
+    else:
+        return {"eventnow": 0, "event": 0, "helpevent": 0}
+
+def save_usage_log(log):
+    with open("command_usage.json", "w") as f:
+        json.dump(log, f, indent=4)
+
+usage_log = load_usage_log()
+
 # === Comenzi Slash ===
 
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
+    usage_log["eventnow"] += 1
+    save_usage_log(usage_log)
+
     await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     day = now.day
@@ -66,13 +83,15 @@ async def eventnow(interaction: discord.Interaction):
         await interaction.followup.send("There are no events today.", ephemeral=True)
 
 @tree.command(name="event", description="Show events for a specific day")
-@app_commands.describe(day="Day of the month (1-31)")  # Nu mai folosi autocomplete
-async def event(interaction: discord.Interaction, day: int):  # Parametrul 'day' este acum int
+@app_commands.describe(day="Day of the month (1-31)")
+async def event(interaction: discord.Interaction, day: int):
+    usage_log["event"] += 1
+    save_usage_log(usage_log)
+
     await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
     month = now.strftime('%B')
 
-    # Verificăm dacă numărul zilei este valid (1-31)
     if 1 <= day <= 31:
         events_today = check_events_for_day(day)
         if events_today:
@@ -87,9 +106,11 @@ async def event(interaction: discord.Interaction, day: int):  # Parametrul 'day'
     else:
         await interaction.followup.send("Please provide a valid day between 1 and 31.", ephemeral=True)
 
-
 @tree.command(name="helpevent", description="Displays information about event commands.")
 async def help_event(interaction: discord.Interaction):
+    usage_log["helpevent"] += 1
+    save_usage_log(usage_log)
+
     embed = discord.Embed(
         title="📅 Event Commands Help",
         description="Use these commands to check today's or upcoming events:",
