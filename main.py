@@ -66,7 +66,7 @@ def check_events_for_day(day: int):
                 for t in timings:
                     start = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
-                    result.append(f"**{name}**\n⏰ {start} – ⏳ {end}")
+                    result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}")
     return result
 
 # === Slash Commands ===
