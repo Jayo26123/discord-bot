@@ -6,11 +6,17 @@ import json
 import pytz
 import os
 from dotenv import load_dotenv
+from pymongo import MongoClient
 from keep_alive import keep_alive
 
 # === Configurări inițiale ===
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
+MONGO_URI = os.getenv("MONGO_URI")  # Setează conexiunea MongoDB în fișierul .env
+
+# Conectarea la MongoDB
+client = MongoClient(MONGO_URI)
+db = client.get_database()  # Alege baza de date
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -21,46 +27,36 @@ tree = bot.tree  # pentru slash commands
 romania_tz = pytz.timezone('Europe/Bucharest')
 
 # === Funcții auxiliare ===
-def ensure_file_exists(filename, default_content):
-    if not os.path.exists(filename):
-        with open(filename, "w") as f:
-            json.dump(default_content, f, indent=4)
+def load_json_file(collection_name):
+    collection = db[collection_name]
+    return list(collection.find())
 
-def load_json_file(filename):
-    with open(filename, "r") as f:
-        return json.load(f)
-
-def load_usage_log():
-    if not os.path.exists("command_usage.json"):
-        return {"eventnow": 0, "event": 0, "helpevent": 0}
-
-    with open("command_usage.json", "r") as f:
-        try:
-            data = json.load(f)
-            if not isinstance(data, dict):
-                raise ValueError("Invalid format")
-            return data
-        except Exception:
-            print("⚠️ Eroare: Fișierul command_usage.json este corupt sau invalid. Se resetează.")
-            return {"eventnow": 0, "event": 0, "helpevent": 0}
-
-def save_usage_log(log_data):
-    with open("command_usage.json", "w") as f:
-        json.dump(log_data, f, indent=4)
+def save_usage_log(collection_name, log_data):
+    collection = db[collection_name]
+    collection.replace_one({"_id": "usage_log"}, log_data, upsert=True)
 
 def increment_usage(command_name):
-    usage_log[command_name] = usage_log.get(command_name, 0) + 1
-    save_usage_log(usage_log)
-    print(f"📈 Comanda /{command_name} folosită de {usage_log[command_name]} ori.")
+    collection = db["command_usage"]
+    usage_data = collection.find_one({"_id": "usage_log"})
+    if usage_data is None:
+        usage_data = {"eventnow": 0, "event": 0, "helpevent": 0}
+    usage_data[command_name] = usage_data.get(command_name, 0) + 1
+    save_usage_log("command_usage", usage_data)
+    print(f"📈 Comanda /{command_name} folosită de {usage_data[command_name]} ori.")
 
 # === Inițializări fișiere ===
-ensure_file_exists("calendar.json", {"EVENTS_CALENDAR": {}})
-ensure_file_exists("event_names.json", {})
-ensure_file_exists("command_usage.json", {"eventnow": 0, "event": 0, "helpevent": 0})
+def ensure_file_exists(collection_name, default_content):
+    collection = db[collection_name]
+    if collection.count_documents({}) == 0:
+        collection.insert_one(default_content)
 
-calendar = load_json_file("calendar.json")
-event_names = load_json_file("event_names.json")
-usage_log = load_usage_log()
+ensure_file_exists("calendar", {"EVENTS_CALENDAR": {}})
+ensure_file_exists("event_names", {})
+ensure_file_exists("command_usage", {"eventnow": 0, "event": 0, "helpevent": 0})
+
+calendar = load_json_file("calendar")
+event_names = load_json_file("event_names")
+usage_log = load_json_file("command_usage")[0] if load_json_file("command_usage") else {"eventnow": 0, "event": 0, "helpevent": 0}
 
 def check_events_for_day(day):
     events_today = []
@@ -155,7 +151,7 @@ async def reset_usage(interaction: discord.Interaction):
         return
 
     usage_log.clear()
-    save_usage_log(usage_log)
+    save_usage_log("command_usage", usage_log)
     await interaction.response.send_message("✅ Usage stats reset.", ephemeral=True)
 
 # === Task periodic: mesaj zilnic ===
