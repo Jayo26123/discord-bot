@@ -21,6 +21,11 @@ tree = bot.tree  # pentru slash commands
 romania_tz = pytz.timezone('Europe/Bucharest')
 
 # === Funcții auxiliare ===
+def ensure_file_exists(filename, default_content):
+    if not os.path.exists(filename):
+        with open(filename, "w") as f:
+            json.dump(default_content, f, indent=4)
+
 def load_calendar():
     with open("calendar.json", "r") as f:
         return json.load(f)
@@ -36,9 +41,12 @@ def load_usage_log():
                 content = f.read().strip()
                 if content:
                     return json.loads(content)
+                else:
+                    print("⚠️ Fișierul command_usage.json este gol. Se inițializează cu valori implicite.")
     except json.JSONDecodeError:
         print("⚠️ Eroare la citirea command_usage.json – fișier invalid. Se reinitializează.")
-
+    
+    # Dacă fișierul este gol sau invalid, inițializăm cu valori implicite
     return {"eventnow": 0, "event": 0, "helpevent": 0}
 
 def save_usage_log(log_data):
@@ -48,6 +56,11 @@ def save_usage_log(log_data):
 def increment_usage(command_name):
     usage_log[command_name] = usage_log.get(command_name, 0) + 1
     save_usage_log(usage_log)
+    print(f"📈 Comanda /{command_name} folosită de {usage_log[command_name]} ori.")
+
+# Asigură existența fișierelor necesare (fără a reseta command_usage.json)
+ensure_file_exists("calendar.json", {"EVENTS_CALENDAR": {}})
+ensure_file_exists("event_names.json", {})
 
 calendar = load_calendar()
 event_names = load_event_names()
@@ -138,6 +151,16 @@ async def usage(interaction: discord.Interaction):
         embed.add_field(name=f"/{command}", value=f"Used `{count}` times", inline=False)
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@tree.command(name="resetusage", description="Reset all usage statistics (admin only)")
+async def reset_usage(interaction: discord.Interaction):
+    if interaction.user.id != 550768541767565314:
+        await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
+        return
+
+    usage_log.clear()
+    save_usage_log(usage_log)
+    await interaction.response.send_message("✅ Usage stats reset.", ephemeral=True)
 
 # === Task periodic: mesaj zilnic ===
 @tasks.loop(seconds=60)
