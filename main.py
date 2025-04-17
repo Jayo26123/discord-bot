@@ -13,10 +13,19 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
 
+# Verificăm dacă variabilele de mediu sunt încărcate corect
+if not TOKEN or not MONGO_URI:
+    print("❌ Missing environment variables!")
+    exit()
+
 # Conectarea la MongoDB
-client = MongoClient(MONGO_URI)
-db = client.bots
-collection = db.bots  # o singură colecție
+try:
+    client = MongoClient(MONGO_URI)
+    db = client.bots
+    collection = db.bots
+except Exception as e:
+    print(f"❌ Error connecting to MongoDB: {e}")
+    exit()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -55,6 +64,7 @@ calendar = get_document("calendar")["EVENTS_CALENDAR"]
 event_names = get_document("event_names")
 usage_log = get_document("command_usage")
 
+# === Funcția pentru verificarea evenimentelor ===
 def check_events_for_day(day):
     events_today = []
     for event_code, dates in calendar.items():
@@ -150,6 +160,9 @@ async def reset_usage(interaction: discord.Interaction):
 # === Task periodic: mesaj zilnic ===
 @tasks.loop(seconds=60)
 async def daily_event_post():
+    if not bot.is_ready():
+        return  # Așteaptă ca botul să fie gata înainte de a rula task-ul
+
     now = datetime.now(romania_tz)
     target_time = now.replace(hour=10, minute=0, second=0, microsecond=0)
     if target_time <= now < target_time + timedelta(minutes=1):
