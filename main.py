@@ -97,25 +97,23 @@ async def eventnow(interaction: discord.Interaction):
         print(f"[EROARE /eventnow]: {e}")
 
 @tree.command(name="event", description="Show events for a specific day")
-@app_commands.describe(day="Day of the month (1-31)")
-async def event(interaction: discord.Interaction, day: int):
+@app_commands.describe(day="Day of the month (1–31)")
+async def event(interaction: discord.Interaction, day: app_commands.Range[int, 1, 31]):
     increment_usage("event")
-    if 1 <= day <= 31:
-        events = check_events_for_day(day)
-        if events:
-            embed = discord.Embed(
-                title=f"Events on {day} {datetime.now(romania_tz).strftime('%B')}",
-                color=discord.Color.blue()
-            )
-            for e in events:
-                embed.add_field(name="\u200b", value=e, inline=False)
-            embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-            embed.set_footer(text="Posted automatically")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        else:
-            await interaction.response.send_message(f"No events on {day}.", ephemeral=True)
+
+    events = check_events_for_day(day)
+    if events:
+        embed = discord.Embed(
+            title=f"Events on {day} {datetime.now(romania_tz).strftime('%B')}",
+            color=discord.Color.blue()
+        )
+        for e in events:
+            embed.add_field(name="\u200b", value=e, inline=False)
+        embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+        embed.set_footer(text="Posted automatically")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
-        await interaction.response.send_message("Please provide a valid day (1-31).", ephemeral=True)
+        await interaction.response.send_message(f"No events on day {day}.", ephemeral=True)
 
 @tree.command(name="helpevent", description="Displays information about event commands.")
 async def helpevent(interaction: discord.Interaction):
