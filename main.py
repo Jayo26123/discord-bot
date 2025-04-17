@@ -123,6 +123,22 @@ async def help_event(interaction: discord.Interaction):
     embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@tree.command(name="usage", description="Shows the usage count for each command (admin only)")
+async def usage(interaction: discord.Interaction):
+    if interaction.user.id != 550768541767565314:
+        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
+        return
+
+    embed = discord.Embed(
+        title="📊 Command Usage Stats",
+        color=discord.Color.gold()
+    )
+
+    for command, count in usage_log.items():
+        embed.add_field(name=f"/{command}", value=f"Used `{count}` times", inline=False)
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
 # === Task periodic: mesaj zilnic ===
 @tasks.loop(seconds=60)
 async def daily_event_post():
