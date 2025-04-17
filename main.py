@@ -26,28 +26,23 @@ def ensure_file_exists(filename, default_content):
         with open(filename, "w") as f:
             json.dump(default_content, f, indent=4)
 
-def load_calendar():
-    with open("calendar.json", "r") as f:
-        return json.load(f)
-
-def load_event_names():
-    with open("event_names.json", "r") as f:
+def load_json_file(filename):
+    with open(filename, "r") as f:
         return json.load(f)
 
 def load_usage_log():
-    try:
-        if os.path.exists("command_usage.json"):
-            with open("command_usage.json", "r") as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-                else:
-                    print("⚠️ Fișierul command_usage.json este gol. Se inițializează cu valori implicite.")
-    except json.JSONDecodeError:
-        print("⚠️ Eroare la citirea command_usage.json – fișier invalid. Se reinitializează.")
-    
-    # Dacă fișierul este gol sau invalid, inițializăm cu valori implicite
-    return {"eventnow": 0, "event": 0, "helpevent": 0}
+    if not os.path.exists("command_usage.json"):
+        return {"eventnow": 0, "event": 0, "helpevent": 0}
+
+    with open("command_usage.json", "r") as f:
+        try:
+            data = json.load(f)
+            if not isinstance(data, dict):
+                raise ValueError("Invalid format")
+            return data
+        except Exception:
+            print("⚠️ Eroare: Fișierul command_usage.json este corupt sau invalid. Se resetează.")
+            return {"eventnow": 0, "event": 0, "helpevent": 0}
 
 def save_usage_log(log_data):
     with open("command_usage.json", "w") as f:
@@ -58,12 +53,13 @@ def increment_usage(command_name):
     save_usage_log(usage_log)
     print(f"📈 Comanda /{command_name} folosită de {usage_log[command_name]} ori.")
 
-# Asigură existența fișierelor necesare (fără a reseta command_usage.json)
+# === Inițializări fișiere ===
 ensure_file_exists("calendar.json", {"EVENTS_CALENDAR": {}})
 ensure_file_exists("event_names.json", {})
+ensure_file_exists("command_usage.json", {"eventnow": 0, "event": 0, "helpevent": 0})
 
-calendar = load_calendar()
-event_names = load_event_names()
+calendar = load_json_file("calendar.json")
+event_names = load_json_file("event_names.json")
 usage_log = load_usage_log()
 
 def check_events_for_day(day):
@@ -80,7 +76,7 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
-# === Comenzi Slash ===
+# === Slash Commands ===
 
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
