@@ -1,5 +1,5 @@
 discord.py
-flask
 python-dotenv
+firebase-admin
 pytz
-pymongo
+flask

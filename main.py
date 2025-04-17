@@ -7,6 +7,8 @@ import pytz
 import os
 from dotenv import load_dotenv
 from keep_alive import keep_alive
+import firebase_admin
+from firebase_admin import credentials, db
 
 # === Configurări inițiale ===
 load_dotenv()
@@ -14,11 +16,25 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree  # pentru slash commands
-
 romania_tz = pytz.timezone('Europe/Bucharest')
+
+# === Configurare Firebase ===
+cred = credentials.Certificate("firebase_credentials.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://bot-event-69-default-rtdb.europe-west1.firebasedatabase.app/'
+})
+usage_ref = db.reference('command_usage')
+
+# === Funcții Firebase ===
+def increment_usage(command_name: str):
+    node = usage_ref.child(command_name)
+    current = node.get() or 0
+    node.set(current + 1)
+
+def get_usage(command_name: str) -> int:
+    return usage_ref.child(command_name).get() or 0
 
 # === Funcții auxiliare ===
 def load_calendar():
@@ -29,60 +45,38 @@ def load_event_names():
     with open("event_names.json", "r") as f:
         return json.load(f)
 
-def load_usage_log():
-    try:
-        if os.path.exists("command_usage.json"):
-            with open("command_usage.json", "r") as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-    except json.JSONDecodeError:
-        print("⚠️ Eroare la citirea command_usage.json – fișier invalid. Se reinitializează.")
-
-    return {"eventnow": 0, "event": 0, "helpevent": 0}
-
-def save_usage_log(log_data):
-    with open("command_usage.json", "w") as f:
-        json.dump(log_data, f, indent=4)
-
-def increment_usage(command_name):
-    usage_log[command_name] = usage_log.get(command_name, 0) + 1
-    save_usage_log(usage_log)
-
-calendar = load_calendar()
+calendar = load_calendar()["EVENTS_CALENDAR"]
 event_names = load_event_names()
-usage_log = load_usage_log()
 
-def check_events_for_day(day):
+def check_events_for_day(day: int):
     events_today = []
-    for event_code, dates in calendar["EVENTS_CALENDAR"].items():
-        event_name = event_names.get(event_code, event_code)
+    for code, dates in calendar.items():
+        name = event_names.get(code, code)
         for days_str, timings in dates.items():
-            event_days = days_str.split("/")
-            if str(day) in event_days:
-                for timing in timings:
-                    start_time = f"{timing['START_HOUR']:02}:{timing['START_MINUTE']:02}"
-                    end_time = f"{timing['END_HOUR']:02}:{timing['END_MINUTE']:02}"
-                    event_field = f"**{event_name}**\n⏰ Start at: {start_time}\n⏳ End at: {end_time}"
-                    events_today.append(event_field)
+            if str(day) in days_str.split("/"):
+                for t in timings:
+                    start = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
+                    end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
+                    events_today.append(f"**{name}**\n⏰ {start} – ⏳ {end}")
     return events_today
 
-# === Comenzi Slash ===
+# === Slash Commands ===
 
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
     increment_usage("eventnow")
     await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
-    day = now.day
-    month = now.strftime('%B')
-    events_today = check_events_for_day(day)
-    if events_today:
-        embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
-        for event in events_today:
-            embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
+    events = check_events_for_day(now.day)
+    if events:
+        embed = discord.Embed(
+            title=f"Today's {now.day} {now.strftime('%B')} Events",
+            color=discord.Color.blue()
+        )
+        for e in events:
+            embed.add_field(name="\u200b", value=e, inline=False)
         embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-        embed.set_footer(text="Event posted automatically")
+        embed.set_footer(text="Posted automatically")
         await interaction.followup.send(embed=embed, ephemeral=True)
     else:
         await interaction.followup.send("There are no events today.", ephemeral=True)
@@ -93,71 +87,77 @@ async def event(interaction: discord.Interaction, day: int):
     increment_usage("event")
     await interaction.response.defer(ephemeral=True)
     now = datetime.now(romania_tz)
-    month = now.strftime('%B')
-
     if 1 <= day <= 31:
-        events_today = check_events_for_day(day)
-        if events_today:
-            embed = discord.Embed(title=f"Events on {day} {month}", color=discord.Color.blue())
-            for event in events_today:
-                embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
-            embed.set_footer(text="Event posted automatically")
+        events = check_events_for_day(day)
+        if events:
+            embed = discord.Embed(
+                title=f"Events on {day} {now.strftime('%B')}",
+                color=discord.Color.blue()
+            )
+            for e in events:
+                embed.add_field(name="\u200b", value=e, inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+            embed.set_footer(text="Posted automatically")
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
-            await interaction.followup.send(f"There are no events on {day} {month}.", ephemeral=True)
+            await interaction.followup.send(f"No events on {day} {now.strftime('%B')}.", ephemeral=True)
     else:
-        await interaction.followup.send("Please provide a valid day between 1 and 31.", ephemeral=True)
+        await interaction.followup.send("Please provide a valid day (1-31).", ephemeral=True)
 
 @tree.command(name="helpevent", description="Displays information about event commands.")
-async def help_event(interaction: discord.Interaction):
+async def helpevent(interaction: discord.Interaction):
     increment_usage("helpevent")
     embed = discord.Embed(
         title="📅 Event Commands Help",
-        description="Use these commands to check today's or upcoming events:",
+        description="`/eventnow` • Today's events\n`/event <day>` • Events on a specific day\n`/usage` • Command usage stats",
         color=discord.Color.blurple()
     )
-    embed.add_field(name="`/eventnow`", value="Shows all events happening **today**.", inline=False)
-    embed.add_field(name="`/event <day>`", value="Displays events for the selected day (e.g. `/event 2`).", inline=False)
-    embed.set_footer(text="Use these commands daily to stay informed about current events.")
-    embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@tree.command(name="usage", description="Shows usage stats for each command")
+async def usage(interaction: discord.Interaction):
+    data = {
+        "eventnow":  get_usage("eventnow"),
+        "event":     get_usage("event"),
+        "helpevent": get_usage("helpevent")
+    }
+    embed = discord.Embed(
+        title="📊 Command Usage",
+        color=discord.Color.green()
+    )
+    for cmd, cnt in data.items():
+        embed.add_field(name=f"/{cmd}", value=f"{cnt} uses", inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # === Task periodic: mesaj zilnic ===
-@tasks.loop(seconds=60)
+@tasks.loop(minutes=1)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    target_time = now.replace(hour=10, minute=0, second=0, microsecond=0)
-    if target_time <= now < target_time + timedelta(minutes=1):
-        print("Running daily_event_post task...")
+    if now.hour == 10 and now.minute == 0:
         channel = bot.get_channel(1130645960113000498)
         if not channel:
-            print("Channel not found!")
             return
-        day = now.day
-        month = now.strftime('%B')
-        events_today = check_events_for_day(day)
-        if events_today:
-            embed = discord.Embed(title=f"Today's {day} {month} Events", color=discord.Color.blue())
-            for event in events_today:
-                embed.add_field(name="\u200b", value=event + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
+        events = check_events_for_day(now.day)
+        if events:
+            embed = discord.Embed(
+                title=f"Today's {now.day} {now.strftime('%B')} Events",
+                color=discord.Color.blue()
+            )
+            for e in events:
+                embed.add_field(name="\u200b", value=e, inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-            embed.set_footer(text="Event posted automatically")
+            embed.set_footer(text="Posted automatically")
             await channel.send("@everyone", embed=embed)
-        else:
-            await channel.send("There are no events today.")
 
-# === Eveniment on_ready ===
 @bot.event
 async def on_ready():
-    activity = discord.Game(name="/helpevent")
-    await bot.change_presence(status=discord.Status.online, activity=activity)
+    await bot.change_presence(activity=discord.Game(name="/helpevent"))
     print(f"✅ Logged in as {bot.user}")
     try:
         synced = await tree.sync()
         print(f"✅ Synced {len(synced)} slash commands.")
     except Exception as e:
-        print(f"❌ Error syncing commands: {e}")
+        print(f"❌ Sync error: {e}")
     daily_event_post.start()
 
 # === Pornire bot ===
