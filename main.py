@@ -38,13 +38,21 @@ def get_usage(command_name: str) -> int:
 
 # === Funcții auxiliare ===
 def load_calendar():
-    with open("calendar.json", "r") as f:
-        data = json.load(f)
-    return data.get("EVENTS_CALENDAR", {})
+    try:
+        with open("calendar.json", "r") as f:
+            data = json.load(f)
+        return data.get("EVENTS_CALENDAR", {})
+    except Exception as e:
+        print(f"[Eroare la load_calendar()]: {e}")
+        return {}
 
 def load_event_names():
-    with open("event_names.json", "r") as f:
-        return json.load(f)
+    try:
+        with open("event_names.json", "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[Eroare la load_event_names()]: {e}")
+        return {}
 
 calendar = load_calendar()
 event_names = load_event_names()
@@ -65,21 +73,28 @@ def check_events_for_day(day: int):
 
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
-    increment_usage("eventnow")
-    now = datetime.now(romania_tz)
-    events = check_events_for_day(now.day)
-    if events:
-        embed = discord.Embed(
-            title=f"Today's {now.day} {now.strftime('%B')} Events",
-            color=discord.Color.blue()
-        )
-        for e in events:
-            embed.add_field(name="\u200b", value=e, inline=False)
-        embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-        embed.set_footer(text="Posted automatically")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-    else:
-        await interaction.response.send_message("There are no events today.", ephemeral=True)
+    try:
+        increment_usage("eventnow")
+        now = datetime.now(romania_tz)
+        events = check_events_for_day(now.day)
+
+        if events:
+            embed = discord.Embed(
+                title=f"Today's {now.day} {now.strftime('%B')} Events",
+                color=discord.Color.blue()
+            )
+            for e in events:
+                embed.add_field(name="\u200b", value=e, inline=False)
+            embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
+            embed.set_footer(text="Posted automatically")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message("There are no events today.", ephemeral=True)
+
+    except Exception as e:
+        if not interaction.response.is_done():
+            await interaction.response.send_message("❌ A apărut o eroare internă.", ephemeral=True)
+        print(f"[EROARE /eventnow]: {e}")
 
 @tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1-31)")
@@ -110,7 +125,6 @@ async def helpevent(interaction: discord.Interaction):
         description=(
             "`/eventnow` • Today's events\n"
             "`/event <day>` • Events on a specific day\n"
-            "`/usage` • Show command usage stats"
         ),
         color=discord.Color.blurple()
     )
@@ -118,7 +132,6 @@ async def helpevent(interaction: discord.Interaction):
 
 @tree.command(name="usage", description="Shows usage stats for each command (admin only)")
 async def usage(interaction: discord.Interaction):
-    # Only allow your Discord ID to use this
     if interaction.user.id != 550768541767565314:
         await interaction.response.send_message(
             "❌ You don't have permission to use this command.",
