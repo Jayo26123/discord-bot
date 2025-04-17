@@ -84,9 +84,9 @@ async def eventnow(interaction: discord.Interaction):
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e, inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-            embed.set_footer(text="Posted automatically")
+            embed.set_footer(text="Event posted automatically")
             await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             await interaction.response.send_message("There are no events today.", ephemeral=True)
@@ -108,9 +108,9 @@ async def event(interaction: discord.Interaction, day: app_commands.Range[int, 1
             color=discord.Color.blue()
         )
         for e in events:
-            embed.add_field(name="\u200b", value=e, inline=False)
+            embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
         embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-        embed.set_footer(text="Posted automatically")
+        embed.set_footer(text="Event posted automatically")
         await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
         await interaction.response.send_message(f"No events on day {day}.", ephemeral=True)
@@ -165,11 +165,12 @@ async def daily_event_post():
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e, inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-            embed.set_footer(text="Posted automatically")
+            embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
 
+# === on_ready + run ===
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="/helpevent"))
@@ -181,6 +182,5 @@ async def on_ready():
         print(f"❌ Sync error: {e}")
     daily_event_post.start()
 
-# === Start bot ===
 keep_alive()
 bot.run(TOKEN)
