@@ -2,72 +2,60 @@ import discord
 from discord.ext import tasks, commands
 from discord import app_commands
 from datetime import datetime, timedelta
+import json
 import pytz
 import os
 from dotenv import load_dotenv
-from pymongo import MongoClient
 from keep_alive import keep_alive
 
 # === Configurări inițiale ===
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
-MONGO_URI = os.getenv("MONGO_URI")
-
-# Verificăm dacă variabilele de mediu sunt încărcate corect
-if not TOKEN or not MONGO_URI:
-    print("❌ Missing environment variables!")
-    exit()
-
-# Conectarea la MongoDB
-try:
-    client = MongoClient(MONGO_URI)
-    db = client.bots
-    collection = db.bots
-except Exception as e:
-    print(f"❌ Error connecting to MongoDB: {e}")
-    exit()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-tree = bot.tree
+tree = bot.tree  # pentru slash commands
 
 romania_tz = pytz.timezone('Europe/Bucharest')
 
 # === Funcții auxiliare ===
-def get_document(key, default=None):
-    doc = collection.find_one({"_id": key})
-    return doc if doc else default
+def load_calendar():
+    with open("calendar.json", "r") as f:
+        return json.load(f)
 
-def save_document(key, data):
-    data["_id"] = key
-    collection.replace_one({"_id": key}, data, upsert=True)
+def load_event_names():
+    with open("event_names.json", "r") as f:
+        return json.load(f)
+
+def load_usage_log():
+    try:
+        if os.path.exists("command_usage.json"):
+            with open("command_usage.json", "r") as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+    except json.JSONDecodeError:
+        print("⚠️ Eroare la citirea command_usage.json – fișier invalid. Se reinitializează.")
+
+    return {"eventnow": 0, "event": 0, "helpevent": 0}
+
+def save_usage_log(log_data):
+    with open("command_usage.json", "w") as f:
+        json.dump(log_data, f, indent=4)
 
 def increment_usage(command_name):
-    usage_data = get_document("command_usage", {"eventnow": 0, "event": 0, "helpevent": 0})
-    usage_data[command_name] = usage_data.get(command_name, 0) + 1
-    save_document("command_usage", usage_data)
-    print(f"📈 Comanda /{command_name} folosită de {usage_data[command_name]} ori.")
+    usage_log[command_name] = usage_log.get(command_name, 0) + 1
+    save_usage_log(usage_log)
 
-# === Inițializare date ===
-if not get_document("calendar"):
-    save_document("calendar", {"EVENTS_CALENDAR": {}})
+calendar = load_calendar()
+event_names = load_event_names()
+usage_log = load_usage_log()
 
-if not get_document("event_names"):
-    save_document("event_names", {})
-
-if not get_document("command_usage"):
-    save_document("command_usage", {"eventnow": 0, "event": 0, "helpevent": 0})
-
-calendar = get_document("calendar")["EVENTS_CALENDAR"]
-event_names = get_document("event_names")
-usage_log = get_document("command_usage")
-
-# === Funcția pentru verificarea evenimentelor ===
 def check_events_for_day(day):
     events_today = []
-    for event_code, dates in calendar.items():
+    for event_code, dates in calendar["EVENTS_CALENDAR"].items():
         event_name = event_names.get(event_code, event_code)
         for days_str, timings in dates.items():
             event_days = days_str.split("/")
@@ -79,7 +67,7 @@ def check_events_for_day(day):
                     events_today.append(event_field)
     return events_today
 
-# === Slash Commands ===
+# === Comenzi Slash ===
 
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
@@ -135,34 +123,9 @@ async def help_event(interaction: discord.Interaction):
     embed.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/747/747310.png")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-@tree.command(name="usage", description="Shows the usage count for each command (admin only)")
-async def usage(interaction: discord.Interaction):
-    if interaction.user.id != 550768541767565314:
-        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
-        return
-
-    embed = discord.Embed(title="📊 Command Usage Stats", color=discord.Color.gold())
-    for command, count in usage_log.items():
-        embed.add_field(name=f"/{command}", value=f"Used `{count}` times", inline=False)
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-@tree.command(name="resetusage", description="Reset all usage statistics (admin only)")
-async def reset_usage(interaction: discord.Interaction):
-    if interaction.user.id != 550768541767565314:
-        await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
-        return
-
-    usage_log.update({"eventnow": 0, "event": 0, "helpevent": 0})
-    save_document("command_usage", usage_log)
-    await interaction.response.send_message("✅ Usage stats reset.", ephemeral=True)
-
 # === Task periodic: mesaj zilnic ===
 @tasks.loop(seconds=60)
 async def daily_event_post():
-    if not bot.is_ready():
-        return  # Așteaptă ca botul să fie gata înainte de a rula task-ul
-
     now = datetime.now(romania_tz)
     target_time = now.replace(hour=10, minute=0, second=0, microsecond=0)
     if target_time <= now < target_time + timedelta(minutes=1):
