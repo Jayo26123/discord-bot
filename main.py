@@ -16,7 +16,7 @@ MONGO_URI = os.getenv("MONGO_URI")  # Setează conexiunea MongoDB în fișierul 
 
 # Conectarea la MongoDB
 client = MongoClient(MONGO_URI)
-db = client.get_database()  # Alege baza de date
+db = client.bots  # Alege baza de date
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -28,15 +28,15 @@ romania_tz = pytz.timezone('Europe/Bucharest')
 
 # === Funcții auxiliare ===
 def load_json_file(collection_name):
-    collection = db[collection_name]
+    collection = db.bots
     return list(collection.find())
 
 def save_usage_log(collection_name, log_data):
-    collection = db[collection_name]
+    collection = db.bots
     collection.replace_one({"_id": "usage_log"}, log_data, upsert=True)
 
 def increment_usage(command_name):
-    collection = db["command_usage"]
+    collection = db.bots
     usage_data = collection.find_one({"_id": "usage_log"})
     if usage_data is None:
         usage_data = {"eventnow": 0, "event": 0, "helpevent": 0}
@@ -46,7 +46,7 @@ def increment_usage(command_name):
 
 # === Inițializări fișiere ===
 def ensure_file_exists(collection_name, default_content):
-    collection = db[collection_name]
+    collection = db.bots
     if collection.count_documents({}) == 0:
         collection.insert_one(default_content)
 
