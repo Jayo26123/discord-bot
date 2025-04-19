@@ -92,7 +92,7 @@ async def eventnow(interaction: discord.Interaction):
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
 
@@ -124,7 +124,7 @@ async def event(interaction: discord.Interaction, day: app_commands.Range[int, 1
             color=discord.Color.blue()
         )
         for e in events:
-            embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
+            embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
         embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
         embed.set_footer(text="Event posted automatically")
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -181,10 +181,53 @@ async def daily_event_post():
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
+
+# ... restul codului tău ...
+
+# === Load reminder config for automatic command explanation ===
+def load_reminder_config():
+    try:
+        with open("reminder_config.json", "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[Error loading reminder_config.json]: {e}")
+        return {"channel_id": None, "times": []}
+
+reminder_config = load_reminder_config()
+
+@tasks.loop(minutes=1)
+async def reminder_post():
+    try:
+        now = datetime.now(romania_tz)
+        current_hour = now.hour
+        current_minute = now.minute
+
+        for t in reminder_config["times"]:
+            if current_hour == t["hour"] and current_minute == t["minute"]:
+                channel = bot.get_channel(reminder_config["channel_id"])
+                if not channel:
+                    print("[Reminder] Channel not found.")
+                    return
+
+                embed = discord.Embed(
+                    title="📌 How to use the event commands",
+                    description=(
+                        "**/eventnow** — Displays all events for *today*\n"
+                        "**/event <day>** — Shows events for a *specific day*\n\n"
+                        "These commands help you plan ahead or stay updated with ongoing events."
+                    ),
+                    color=discord.Color.orange()
+                )
+                embed.set_footer(text="Reminder posted automatically")
+                await channel.send(embed=embed)
+                break  # Avoid multiple sends in one minute
+
+    except Exception as e:
+        print(f"[Reminder Task Error]: {e}")
 
 # === on_ready + run ===
 @bot.event
@@ -197,6 +240,7 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Sync error: {e}")
     daily_event_post.start()
+    reminder_post.start()  # <<<< START the reminder task here
 
 keep_alive()
 bot.run(TOKEN)
