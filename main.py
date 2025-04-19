@@ -83,8 +83,10 @@ reminder_config = load_reminder_config()
 def check_events_for_day(day: int):
     result = []
     for code, dates in calendar.items():
+        code = code.strip()
         name = event_names.get(code, code)
         description = event_descriptions.get(code, "")  # Luăm descrierea, dacă există
+        print(f"DEBUG: {code} -> {description}")  # DEBUG
         for days_str, timings in dates.items():
             if str(day) in days_str.split("/"):
                 for t in timings:
@@ -93,7 +95,7 @@ def check_events_for_day(day: int):
                     
                     text = f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}"
                     if description:
-                        text += f"\n📜 {description}"  # Adăugăm descrierea după ore
+                        text += f"\n📜 {description}"  # Description
                     
                     result.append(text)
     return result
@@ -107,6 +109,7 @@ async def eventnow(interaction: discord.Interaction):
         now = datetime.now(romania_tz)
         events = check_events_for_day(now.day)
 
+        # If there are events, send an embed
         if events:
             embed = discord.Embed(
                 title=f"Today's {now.day} {now.strftime('%B')} Events",
@@ -116,14 +119,20 @@ async def eventnow(interaction: discord.Interaction):
                 embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            # Send the message with the events
+            if not interaction.response.is_done():
+                await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
-            await interaction.response.send_message("There are no events today.", ephemeral=True)
+            # If there are no events, send a simple message
+            if not interaction.response.is_done():
+                await interaction.response.send_message("There are no events today.", ephemeral=True)
 
     except Exception as e:
+        print(f"[ERROR /eventnow]: {e}")
+        # If a response has already been sent, do not try to send an error message
         if not interaction.response.is_done():
-            await interaction.response.send_message("❌ A apărut o eroare internă.", ephemeral=True)
-        print(f"[EROARE /eventnow]: {e}")
+            await interaction.response.send_message("❌ An internal error occurred.", ephemeral=True)
+
 
 @tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1–31)")
