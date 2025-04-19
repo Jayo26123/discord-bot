@@ -33,7 +33,7 @@
   "OX_EVENT": "OX Event",
   "PVM_EVENT": "PvM Event",
   "PVP_EVENT": "PvP Event",
-  "KINGDOM_WAR_FLAG_EVEN": "Kingdom War Event",
+  "KINGDOM_WAR_FLAG_EVENT": "Kingdom War Event",
   "RANDOM_WORD_EVENT": "Random Word Event",
   "SANTAS_LOOT_EVENT": "Santas Loot Event",
   "SEASONAL_EVENT": "Seasonal Event",
@@ -42,44 +42,4 @@
   "TANAKA_EVENT": "Tanaka Event",
   "WORLDCUP_EVENT": "Worldcup Event"
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
