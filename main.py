@@ -10,7 +10,6 @@ from keep_alive import keep_alive
 import firebase_admin
 from firebase_admin import credentials, db
 
-# === Configurări inițiale ===
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -76,7 +75,7 @@ def check_events_for_day(day: int):
                 for t in timings:
                     start = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
-                    result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}\n📖 Description: {description}")
+                    result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}\n📖 **Description:** {description}")
     return result
 
 # === Slash Commands ===
@@ -94,7 +93,7 @@ async def eventnow(interaction: discord.Interaction):
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -118,7 +117,7 @@ async def event(interaction: discord.Interaction, day: app_commands.Range[int, 1
             color=discord.Color.blue()
         )
         for e in events:
-            embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
+            embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
         embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
         embed.set_footer(text="Event posted automatically")
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -175,7 +174,7 @@ async def daily_event_post():
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
