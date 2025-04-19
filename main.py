@@ -83,7 +83,6 @@ def check_events_for_day(day: int):
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
     try:
-        increment_usage("eventnow")
         now = datetime.now(romania_tz)
         events = check_events_for_day(now.day)
 
@@ -96,14 +95,22 @@ async def eventnow(interaction: discord.Interaction):
                 embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
+
             await interaction.response.send_message(embed=embed, ephemeral=True)
+
         else:
             await interaction.response.send_message("There are no events today.", ephemeral=True)
 
+        increment_usage("eventnow")  
+
     except Exception as e:
         if not interaction.response.is_done():
-            await interaction.response.send_message("❌ A apărut o eroare internă.", ephemeral=True)
+            try:
+                await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
+            except:
+                pass
         print(f"[EROARE /eventnow]: {e}")
+
 
 @tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1–31)")
