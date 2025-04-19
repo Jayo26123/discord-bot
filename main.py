@@ -56,7 +56,7 @@ def load_event_names():
 
 def load_event_descriptions():
     try:
-        with open("event_descriptions.json", "r") as f:
+        with open("event_description.json", "r") as f:
             return json.load(f)
     except Exception as e:
         print(f"[Eroare la load_event_descriptions()]: {e}")
@@ -66,38 +66,17 @@ calendar = load_calendar()
 event_names = load_event_names()
 event_descriptions = load_event_descriptions()
 
-def load_reminder_config():
-    try:
-        with open("reminder_config.json", "r") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"[Eroare la load_reminder_config()]: {e}")
-        return {
-            "channel_id": None,
-            "times": []
-        }
-
-reminder_config = load_reminder_config()
-
-
 def check_events_for_day(day: int):
     result = []
     for code, dates in calendar.items():
-        code = code.strip()
         name = event_names.get(code, code)
-        description = event_descriptions.get(code, "")  # Luăm descrierea, dacă există
-        print(f"DEBUG: {code} -> {description}")  # DEBUG
+        description = event_descriptions.get(code, "No description available.")  # Default description if none found
         for days_str, timings in dates.items():
             if str(day) in days_str.split("/"):
                 for t in timings:
                     start = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
-                    
-                    text = f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}"
-                    if description:
-                        text += f"\n📜 {description}"  # Description
-                    
-                    result.append(text)
+                    result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}\n📖 Description: {description}")
     return result
 
 # === Slash Commands ===
@@ -109,7 +88,6 @@ async def eventnow(interaction: discord.Interaction):
         now = datetime.now(romania_tz)
         events = check_events_for_day(now.day)
 
-        # If there are events, send an embed
         if events:
             embed = discord.Embed(
                 title=f"Today's {now.day} {now.strftime('%B')} Events",
@@ -119,20 +97,14 @@ async def eventnow(interaction: discord.Interaction):
                 embed.add_field(name="\u200b", value=e + "\n━━━━━━━⊱⋆⊰━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
-            # Send the message with the events
-            if not interaction.response.is_done():
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
-            # If there are no events, send a simple message
-            if not interaction.response.is_done():
-                await interaction.response.send_message("There are no events today.", ephemeral=True)
+            await interaction.response.send_message("There are no events today.", ephemeral=True)
 
     except Exception as e:
-        print(f"[ERROR /eventnow]: {e}")
-        # If a response has already been sent, do not try to send an error message
         if not interaction.response.is_done():
-            await interaction.response.send_message("❌ An internal error occurred.", ephemeral=True)
-
+            await interaction.response.send_message("❌ A apărut o eroare internă.", ephemeral=True)
+        print(f"[EROARE /eventnow]: {e}")
 
 @tree.command(name="event", description="Show events for a specific day")
 @app_commands.describe(day="Day of the month (1–31)")
@@ -208,31 +180,6 @@ async def daily_event_post():
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
 
-@tasks.loop(minutes=1)
-async def command_reminder_post():
-    now = datetime.now(romania_tz)
-    config = load_reminder_config()
-    channel_id = config.get("channel_id")
-    times = config.get("times", [])
-
-    if not channel_id or not times:
-        return
-
-    current_time = now.strftime("%H:%M")
-    if current_time in times:
-        channel = bot.get_channel(channel_id)
-        if channel:
-            embed = discord.Embed(
-                title="📅 Comenzi evenimente disponibile",
-                description=(
-                    "• `/eventnow` → Afișează evenimentele de astăzi\n"
-                    "• `/event <zi>` → Afișează evenimentele dintr-o anumită zi\n"
-                ),
-                color=discord.Color.gold()
-            )
-            embed.set_footer(text="Acest mesaj este trimis automat")
-            await channel.send(embed=embed)
-
 # === on_ready + run ===
 @bot.event
 async def on_ready():
@@ -244,7 +191,6 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Sync error: {e}")
     daily_event_post.start()
-    command_reminder_post.start()
 
 keep_alive()
 bot.run(TOKEN)
