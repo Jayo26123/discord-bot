@@ -93,7 +93,7 @@ async def eventnow(interaction: discord.Interaction):
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -117,7 +117,7 @@ async def event(interaction: discord.Interaction, day: app_commands.Range[int, 1
             color=discord.Color.blue()
         )
         for e in events:
-            embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
+            embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
         embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
         embed.set_footer(text="Event posted automatically")
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -174,7 +174,7 @@ async def daily_event_post():
                 color=discord.Color.blue()
             )
             for e in events:
-                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
+                embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━", inline=False)
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
