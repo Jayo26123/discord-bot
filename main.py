@@ -18,6 +18,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
 romania_tz = pytz.timezone('Europe/Bucharest')
+last_reminder_sent = {"hour": None, "minute": None}
 
 # === Configurare Firebase ===
 cred = credentials.Certificate("firebase_credentials.json")
@@ -201,10 +202,15 @@ reminder_config = load_reminder_config()
 
 @tasks.loop(minutes=1)
 async def reminder_post():
+    global last_reminder_sent
     try:
         now = datetime.now(romania_tz)
         current_hour = now.hour
         current_minute = now.minute
+
+        # Prevent multiple sends in the same minute
+        if last_reminder_sent["hour"] == current_hour and last_reminder_sent["minute"] == current_minute:
+            return
 
         for t in reminder_config["times"]:
             if current_hour == t["hour"] and current_minute == t["minute"]:
@@ -224,7 +230,10 @@ async def reminder_post():
                 )
                 embed.set_footer(text="Reminder posted automatically")
                 await channel.send(embed=embed)
-                break  # Avoid multiple sends in one minute
+
+                # Set protection flag
+                last_reminder_sent = {"hour": current_hour, "minute": current_minute}
+                break
 
     except Exception as e:
         print(f"[Reminder Task Error]: {e}")
@@ -240,7 +249,7 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Sync error: {e}")
     daily_event_post.start()
-    reminder_post.start()  # <<<< START the reminder task here
-
+    reminder_post.start()  
+    
 keep_alive()
 bot.run(TOKEN)
