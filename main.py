@@ -54,19 +54,48 @@ def load_event_names():
         print(f"[Eroare la load_event_names()]: {e}")
         return {}
 
+def load_event_descriptions():
+    try:
+        with open("event_descriptions.json", "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[Eroare la load_event_descriptions()]: {e}")
+        return {}
+
 calendar = load_calendar()
 event_names = load_event_names()
+event_descriptions = load_event_descriptions()
+
+def load_reminder_config():
+    try:
+        with open("reminder_config.json", "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[Eroare la load_reminder_config()]: {e}")
+        return {
+            "channel_id": None,
+            "times": []
+        }
+
+reminder_config = load_reminder_config()
+
 
 def check_events_for_day(day: int):
     result = []
     for code, dates in calendar.items():
         name = event_names.get(code, code)
+        description = event_descriptions.get(code, "")  # Luăm descrierea, dacă există
         for days_str, timings in dates.items():
             if str(day) in days_str.split("/"):
                 for t in timings:
                     start = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
-                    result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}")
+                    
+                    text = f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}"
+                    if description:
+                        text += f"\n📜 {description}"  # Adăugăm descrierea după ore
+                    
+                    result.append(text)
     return result
 
 # === Slash Commands ===
@@ -170,6 +199,31 @@ async def daily_event_post():
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
 
+@tasks.loop(minutes=1)
+async def command_reminder_post():
+    now = datetime.now(romania_tz)
+    config = load_reminder_config()
+    channel_id = config.get("channel_id")
+    times = config.get("times", [])
+
+    if not channel_id or not times:
+        return
+
+    current_time = now.strftime("%H:%M")
+    if current_time in times:
+        channel = bot.get_channel(channel_id)
+        if channel:
+            embed = discord.Embed(
+                title="📅 Comenzi evenimente disponibile",
+                description=(
+                    "• `/eventnow` → Afișează evenimentele de astăzi\n"
+                    "• `/event <zi>` → Afișează evenimentele dintr-o anumită zi\n"
+                ),
+                color=discord.Color.gold()
+            )
+            embed.set_footer(text="Acest mesaj este trimis automat")
+            await channel.send(embed=embed)
+
 # === on_ready + run ===
 @bot.event
 async def on_ready():
@@ -181,6 +235,7 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Sync error: {e}")
     daily_event_post.start()
+    command_reminder_post.start()
 
 keep_alive()
 bot.run(TOKEN)
