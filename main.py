@@ -20,14 +20,14 @@ tree = bot.tree
 romania_tz = pytz.timezone('Europe/Bucharest')
 last_reminder_sent = {"hour": None, "minute": None}
 
-# === Configurare Firebase ===
+# === Firebase Config ===
 cred = credentials.Certificate("firebase_credentials.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://bot-event-69-default-rtdb.europe-west1.firebasedatabase.app/'
 })
 usage_ref = db.reference('command_usage')
 
-# === Funcții Firebase ===
+# === Firebase Function ===
 def increment_usage(command_name: str):
     node = usage_ref.child(command_name)
     current = node.get() or 0
@@ -36,7 +36,7 @@ def increment_usage(command_name: str):
 def get_usage(command_name: str) -> int:
     return usage_ref.child(command_name).get() or 0
 
-# === Funcții auxiliare ===
+# === Auxiliar Function ===
 def load_calendar():
     try:
         with open("calendar.json", "r") as f:
@@ -171,7 +171,7 @@ async def usage(interaction: discord.Interaction):
 @tasks.loop(minutes=1)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    if now.hour == 15 and now.minute == 35:
+    if now.hour == 10 and now.minute == 0:
         channel = bot.get_channel(1130645960113000498)
         if not channel:
             return
@@ -186,8 +186,6 @@ async def daily_event_post():
             embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
             embed.set_footer(text="Event posted automatically")
             await channel.send("@everyone", embed=embed)
-
-# ... restul codului tău ...
 
 # === Load reminder config for automatic command explanation ===
 def load_reminder_config():
