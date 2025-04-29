@@ -171,7 +171,7 @@ async def usage(interaction: discord.Interaction):
 @tasks.loop(minutes=1)
 async def daily_event_post():
     now = datetime.now(romania_tz)
-    if now.hour == 10 and now.minute == 0:
+    if now.hour == 15 and now.minute == 35:
         channel = bot.get_channel(1130645960113000498)
         if not channel:
             return
