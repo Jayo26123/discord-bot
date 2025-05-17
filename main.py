@@ -10,6 +10,8 @@ from keep_alive import keep_alive
 import firebase_admin
 from firebase_admin import credentials, db
 
+print(f"TOKEN este: {repr(TOKEN)}")  # Temporar, pentru debugging
+
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -267,6 +269,4 @@ async def on_ready():
     reminder_post.start()  
     
 keep_alive()
-print(f"TOKEN este: {repr(TOKEN)}")  # Temporar, pentru debugging
-
 bot.run(TOKEN)
