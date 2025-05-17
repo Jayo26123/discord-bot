@@ -112,25 +112,42 @@ async def eventnow(interaction: discord.Interaction):
                 pass
         print(f"[EROARE /eventnow]: {e}")
 
+@tree.command(name="event", description="Check events for a specific day (1-31)")
+async def event(interaction: discord.Interaction, day: int):
+    if day < 1 or day > 31:
+        await interaction.response.send_message("⚠️ Please enter a valid day between 1 and 31.", ephemeral=True)
+        return
 
-@tree.command(name="event", description="Show events for a specific day")
-@app_commands.describe(day="Day of the month (1–31)")
-async def event(interaction: discord.Interaction, day: app_commands.Range[int, 1, 31]):
-    increment_usage("event")
+    # Obține luna curentă și ultima zi validă a lunii
+    now = datetime.now(romania_tz)
+    current_year = now.year
+    current_month = now.month
+    month_name = now.strftime('%B')
+
+    from calendar import monthrange
+    last_day = monthrange(current_year, current_month)[1]
+
+    if day > last_day:
+        await interaction.response.send_message(
+            f"⚠️ Day {day} is not valid for {month_name} (max {last_day}).", ephemeral=True
+        )
+        return
 
     events = check_events_for_day(day)
-    if events:
-        embed = discord.Embed(
-            title=f"Events on {day} {datetime.now(romania_tz).strftime('%B')}",
-            color=discord.Color.blue()
-        )
-        for e in events:
-            embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
-        embed.set_image(url="https://i.imgur.com/q3PYcgP.png")
-        embed.set_footer(text="Event posted automatically")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-    else:
-        await interaction.response.send_message(f"No events on day {day}.", ephemeral=True)
+
+    if not events:
+        await interaction.response.send_message(f"No events found for {day} {month_name}.", ephemeral=True)
+        return
+
+    embed = discord.Embed(
+        title=f"Events on {day} {month_name}",
+        color=discord.Color.blue()
+    )
+
+    for event in events:
+        embed.add_field(name=event['name'], value=event['description'], inline=False)
+
+    await interaction.response.send_message(embed=embed)
 
 @tree.command(name="helpevent", description="Displays information about event commands.")
 async def helpevent(interaction: discord.Interaction):
