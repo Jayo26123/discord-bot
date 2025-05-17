@@ -10,10 +10,8 @@ from keep_alive import keep_alive
 import firebase_admin
 from firebase_admin import credentials, db
 
-print(f"TOKEN este: {repr(TOKEN)}")  # Temporar, pentru debugging
-
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
