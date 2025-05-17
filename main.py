@@ -267,4 +267,6 @@ async def on_ready():
     reminder_post.start()  
     
 keep_alive()
+print(f"TOKEN este: {repr(TOKEN)}")  # Temporar, pentru debugging
+
 bot.run(TOKEN)
