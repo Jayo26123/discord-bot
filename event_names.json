@@ -41,5 +41,8 @@
   "SYMBOL_EVENT": "Symbol Event",
   "TANAKA_EVENT": "Tanaka Event",
   "WORLDCUP_EVENT": "Worldcup Event"
+  "HYPERBOOST_EVENT": "Hyper Boost Event"
+  "SPIN_WHEEL_EVENT": "Spin Wheel Event"
+  "SECRET_MAPS_EVENT": "Secret Maps Event"
 }
 

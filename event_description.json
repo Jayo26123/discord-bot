@@ -33,7 +33,7 @@
     "OX_EVENT": "True or False? Are you ready to try your luck? Arena OX is waiting for you, be the only one in the Arena with the correct answers and you will be rewarded at the end.",
     "PVM_EVENT": "In a special map, a lot of fierce bosses will appear, defeat them and you will receive valuable Tiger Coins. Right Click on Coin to open the Shop.",
     "PVP_EVENT": "Kingdom War it's a battle of conquest, collect the flags, score points with them and prove that you are strong, the entire Kingdom will be rewarded with 20% bosses/stones for 2 day.",
-    "KINGDOM_WAR_FLAG_EVEN": "The Bravest members of each kingdom will confront each other in an epic battle for glory and triumph. The winning kingdom and loser kingdom will be rewarded with a bonus at the end.",
+    "KINGDOM_WAR_FLAG_EVENT": "Is a competition event where the bravest members of each realm will confront each other in an epic battle for glory and triumph.Capture the opponent`s flag and move it back to the own base to score a point.",
     "RANDOM_WORD_EVENT": "The random word will appear in-game Chat, be the first to spell it correctly and you will receive the prize for your quick skill.",
     "SANTAS_LOOT_EVENT": "Santa's gift is hidden in the farm maps, find it first to open the chest full of amazing prizes.",
     "SEASONAL_EVENT": "Special Event for Special Holidays specific thematic, check the Special NPC near Uriel to craft various items to farm and increase your evolution more easily.",
@@ -41,5 +41,8 @@
     "SYMBOL_EVENT": "Form the word \"RODNIA2\" with symbols you get from Bosses and monsters close to your level and you will receive valuable rewards.",
     "TANAKA_EVENT": "Catch and Kill Tanaka Pirate, collect the most quivers, their quiver contains very valuable things.",
     "WORLDCUP_EVENT": "Drop Football from Metins, Monsters and Dungeons with amazing prizes, also check the NPC near Uriel to make your goals stand out."
+    "HYPERBOOST_EVENT": " The Hyper Boost Event introduces new dungeons, valuable rewards, and gameplay upgrades to help you progress faster and dominate every challenge. "
+    "SPIN_WHEEL_EVENT": "Destroy a certain number of stones to fill the progress bar and spin the wheel for a prize. Rewards are based on level ranges."
+    "SECRET_MAPS_EVENT": "During the event, you will obtain shards in maps, at 50 you will receive a pass for a secret map, which will be special metins with 1.5x Drop, you will be able to farm for 20 minutes! Hurry!"
   }
   
