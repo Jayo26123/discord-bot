@@ -146,7 +146,7 @@ async def event(interaction: discord.Interaction, day: int):
     for e in events:
         embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @tree.command(name="helpevent", description="Displays information about event commands.")
 async def helpevent(interaction: discord.Interaction):
