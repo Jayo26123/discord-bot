@@ -118,7 +118,6 @@ async def event(interaction: discord.Interaction, day: int):
         await interaction.response.send_message("⚠️ Please enter a valid day between 1 and 31.", ephemeral=True)
         return
 
-    # Obține luna curentă și ultima zi validă a lunii
     now = datetime.now(romania_tz)
     current_year = now.year
     current_month = now.month
@@ -144,8 +143,8 @@ async def event(interaction: discord.Interaction, day: int):
         color=discord.Color.blue()
     )
 
-    for event in events:
-        embed.add_field(name=event['name'], value=event['description'], inline=False)
+    for e in events:
+        embed.add_field(name="\u200b", value=e + "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━", inline=False)
 
     await interaction.response.send_message(embed=embed)
 
