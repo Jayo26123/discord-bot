@@ -6,7 +6,7 @@
   "CALENDAR_OKEY_EVENT": "Calendar Okey Event",
   "COLLECT_LETTERS_EVENT": "Collect Letters Event",
   "COMBAT_ZONE_EVENT": "Combat Zone Event",
-  "COMEBACK_EVENT": "Comeback Event",
+  "COMEBACK_EVENT": "Loyality Event",
   "DESTINYSWHEEL_EVENT": "Destinyswheel Event",
   "DOJANG35_CLASIC_EVENT": "Dojang35 Clasic Event",
   "DOJANG35_UNIVERSAL_EVENT": "Dojang35 Universal Event",
@@ -43,6 +43,16 @@
   "WORLDCUP_EVENT": "Worldcup Event",
   "HYPERBOOST_EVENT": "Hyper Boost Event",
   "SPIN_WHEEL_EVENT": "Spin Wheel Event",
+  "DOUBLE_MYTHIC_STONE_EVENT": "Double Mythic Stone Event",
+  "DOUBLE_DROP_MINING_EVENT": "Double Drop Mining Event",
+  "DOUBLE_DROP_FLOWER_EVENT": "Double Drop Flower Event",
+  "DOUBLE_FISH_EVENT": "Double Fish Event",
+  "DOUBLE_RANK_POINTS_EVENT": "Double Rank Points Event",
+  "DOUBLE_DROP_RUNE_EVENT": "Double Drop Rune Event",
+  "FISH_LOOT_BOX_EVENT": "Fish Loot Box Event",
+  "LEGENDARY_FISH_EVENT": "Legendary Fish Event",
+  "BOSS_RESPAWN_FREENZY_EVENT": "Boss Respawn Freenzy Event",
+  "SERPENT_INVASION": "Serpent Invasion",
+  "BOSSES_INVASION": "Boss Invasion Event",
   "SECRET_MAPS_EVENT": "Secret Maps Event"
 }
-
