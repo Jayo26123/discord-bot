@@ -154,4 +154,5 @@
                 { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
             ]
         }
+    }
 }
