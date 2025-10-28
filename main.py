@@ -152,7 +152,7 @@ def load_bot_config():
     except FileNotFoundError:
         logger.warning("bot_config.json not found, using defaults")
         return {
-            "daily_event_channel_id": 1130645960113000498,
+            "daily_event_channel_id": 1360321533678981332,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
             "admin_user_ids": [550768541767565314, 650380866941616156]
@@ -160,7 +160,7 @@ def load_bot_config():
     except Exception as e:
         logger.error(f"Error loading bot config: {e}")
         return {
-            "daily_event_channel_id": 1130645960113000498,
+            "daily_event_channel_id": 1360321533678981332,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
             "admin_user_ids": [550768541767565314, 650380866941616156]
