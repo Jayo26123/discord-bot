@@ -462,6 +462,8 @@ async def botstatus(interaction: discord.Interaction):
             )
             return
 
+        await interaction.response.defer(ephemeral=True)
+
         now = datetime.now(romania_tz)
         uptime = (now - bot_health.get("startup_time", now)).total_seconds() / 3600
         
@@ -484,7 +486,7 @@ async def botstatus(interaction: discord.Interaction):
             last_task = (now - bot_health["last_task_run"]).total_seconds()
             embed.add_field(name="Last Task Run", value=f"{last_task:.0f}s ago", inline=True)
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         logger.error(f"Error in /botstatus: {e}")
