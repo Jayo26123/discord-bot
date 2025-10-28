@@ -155,7 +155,7 @@ def load_bot_config():
             "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314, 650380866941616156]
+            "admin_user_ids": [550768541767565314]
         }
     except Exception as e:
         logger.error(f"Error loading bot config: {e}")
@@ -163,7 +163,7 @@ def load_bot_config():
             "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314, 650380866941616156]
+            "admin_user_ids": [550768541767565314]
         }
 
 # Load all configurations
@@ -406,15 +406,11 @@ async def usage(interaction: discord.Interaction):
         
         await interaction.followup.send(embed=embed, ephemeral=True)
         
+    except discord.errors.NotFound:
+        # Interaction already consumed - ignore this error
+        pass
     except Exception as e:
         logger.error(f"Error in /usage: {e}")
-        try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
-            else:
-                await interaction.followup.send("❌ Internal problem. Try later.", ephemeral=True)
-        except:
-            pass
 
 @tree.command(name="eventannounce", description="Manually triggers today's event announcement (admin only)")
 async def eventannounce(interaction: discord.Interaction):
@@ -438,15 +434,11 @@ async def eventannounce(interaction: discord.Interaction):
         else:
             await interaction.followup.send("❌ Failed to send event announcement. Check logs.", ephemeral=True)
         
+    except discord.errors.NotFound:
+        # Interaction already consumed - ignore this error
+        pass
     except Exception as e:
         logger.error(f"Error in /eventannounce: {e}")
-        try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
-            else:
-                await interaction.followup.send("❌ Internal problem. Try later.", ephemeral=True)
-        except:
-            pass
 
 @tree.command(name="reloadconfig", description="Reloads all configuration files (admin only)")
 async def reloadconfig(interaction: discord.Interaction):
@@ -473,15 +465,11 @@ async def reloadconfig(interaction: discord.Interaction):
         await interaction.followup.send("✅ All configuration files reloaded successfully!", ephemeral=True)
         logger.info(f"Configuration reloaded by {interaction.user}")
         
+    except discord.errors.NotFound:
+        # Interaction already consumed - ignore this error
+        pass
     except Exception as e:
         logger.error(f"Error in /reloadconfig: {e}")
-        try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("❌ Error reloading configurations.", ephemeral=True)
-            else:
-                await interaction.followup.send("❌ Error reloading configurations.", ephemeral=True)
-        except:
-            pass
 
 @tree.command(name="botstatus", description="Shows bot health and status (admin only)")
 async def botstatus(interaction: discord.Interaction):
@@ -521,15 +509,11 @@ async def botstatus(interaction: discord.Interaction):
         
         await interaction.followup.send(embed=embed, ephemeral=True)
         
+    except discord.errors.NotFound:
+        # Interaction already consumed - ignore this error
+        pass
     except Exception as e:
         logger.error(f"Error in /botstatus: {e}")
-        try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
-            else:
-                await interaction.followup.send("❌ Internal problem. Try later.", ephemeral=True)
-        except:
-            pass
 
 # === Reminder task ===
 @tasks.loop(minutes=1)
