@@ -152,18 +152,18 @@ def load_bot_config():
     except FileNotFoundError:
         logger.warning("bot_config.json not found, using defaults")
         return {
-            "daily_event_channel_id": 1360321533678981332,
+            "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314, 650380866941616156]
+            "admin_user_ids": [550768541767565314]
         }
     except Exception as e:
         logger.error(f"Error loading bot config: {e}")
         return {
-            "daily_event_channel_id": 1360321533678981332,
+            "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314, 650380866941616156]
+            "admin_user_ids": [550768541767565314]
         }
 
 # Load all configurations
@@ -185,6 +185,14 @@ def check_events_for_day(day: int):
                     end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
                     result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}\n📖 **Description:** {description}")
     return result
+
+def is_admin(user_id: int) -> bool:
+    """Check if user is admin"""
+    admin_ids = bot_config.get("admin_user_ids", [])
+    # Backwards compatibility with old config
+    if not admin_ids and "admin_user_id" in bot_config:
+        admin_ids = [bot_config["admin_user_id"]]
+    return user_id in admin_ids
 
 # === Function to send daily event post ===
 async def send_daily_event_post():
@@ -373,12 +381,16 @@ async def helpevent(interaction: discord.Interaction):
 @tree.command(name="usage", description="Shows usage stats for each command (admin only)")
 async def usage(interaction: discord.Interaction):
     try:
-        if interaction.user.id not in bot_config.get("admin_user_ids", []):
+        # Check admin permission
+        if not is_admin(interaction.user.id):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
             )
             return
+
+        # Defer immediately after permission check
+        await interaction.response.defer(ephemeral=True)
 
         data = {
             "eventnow":  get_usage("eventnow"),
@@ -391,27 +403,36 @@ async def usage(interaction: discord.Interaction):
         )
         for cmd, cnt in data.items():
             embed.add_field(name=f"/{cmd}", value=f"{cnt} uses", inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         logger.error(f"Error in /usage: {e}")
-        if not interaction.response.is_done():
-            try:
+        try:
+            if not interaction.response.is_done():
                 await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
-            except:
-                pass
+            else:
+                await interaction.followup.send("❌ Internal problem. Try later.", ephemeral=True)
+        except:
+            pass
 
 @tree.command(name="eventannounce", description="Manually triggers today's event announcement (admin only)")
 async def eventannounce(interaction: discord.Interaction):
     try:
-        if interaction.user.id not in bot_config.get("admin_user_ids", []):
+        # Check admin permission
+        if not is_admin(interaction.user.id):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
             )
             return
+        
+        # Defer immediately after permission check
         await interaction.response.defer(ephemeral=True)
+        
+        # Send the announcement
         success = await send_daily_event_post()
+        
         if success:
             await interaction.followup.send("✅ Manual event announcement sent!", ephemeral=True)
         else:
@@ -419,23 +440,27 @@ async def eventannounce(interaction: discord.Interaction):
         
     except Exception as e:
         logger.error(f"Error in /eventannounce: {e}")
-        if not interaction.response.is_done():
-            try:
+        try:
+            if not interaction.response.is_done():
                 await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
-            except:
-                pass
+            else:
+                await interaction.followup.send("❌ Internal problem. Try later.", ephemeral=True)
+        except:
+            pass
 
 @tree.command(name="reloadconfig", description="Reloads all configuration files (admin only)")
 async def reloadconfig(interaction: discord.Interaction):
     global calendar, event_names, event_descriptions, reminder_config, bot_config
     try:
-        if interaction.user.id not in bot_config.get("admin_user_ids", []):
+        # Check admin permission
+        if not is_admin(interaction.user.id):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
             )
             return
 
+        # Defer immediately after permission check
         await interaction.response.defer(ephemeral=True)
         
         # Reload all configurations
@@ -450,18 +475,26 @@ async def reloadconfig(interaction: discord.Interaction):
         
     except Exception as e:
         logger.error(f"Error in /reloadconfig: {e}")
-        await interaction.followup.send("❌ Error reloading configurations.", ephemeral=True)
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message("❌ Error reloading configurations.", ephemeral=True)
+            else:
+                await interaction.followup.send("❌ Error reloading configurations.", ephemeral=True)
+        except:
+            pass
 
 @tree.command(name="botstatus", description="Shows bot health and status (admin only)")
 async def botstatus(interaction: discord.Interaction):
     try:
-        if interaction.user.id not in bot_config.get("admin_user_ids", []):
+        # Check admin permission
+        if not is_admin(interaction.user.id):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
             )
             return
 
+        # Defer immediately after permission check
         await interaction.response.defer(ephemeral=True)
 
         now = datetime.now(romania_tz)
@@ -490,6 +523,13 @@ async def botstatus(interaction: discord.Interaction):
         
     except Exception as e:
         logger.error(f"Error in /botstatus: {e}")
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
+            else:
+                await interaction.followup.send("❌ Internal problem. Try later.", ephemeral=True)
+        except:
+            pass
 
 # === Reminder task ===
 @tasks.loop(minutes=1)
