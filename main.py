@@ -155,7 +155,7 @@ def load_bot_config():
             "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314]
+            "admin_user_ids": [550768541767565314, 650380866941616156]
         }
     except Exception as e:
         logger.error(f"Error loading bot config: {e}")
@@ -163,7 +163,7 @@ def load_bot_config():
             "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314]
+            "admin_user_ids": [550768541767565314, 650380866941616156]
         }
 
 # Load all configurations
