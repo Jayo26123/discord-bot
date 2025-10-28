@@ -5,8 +5,18 @@ from datetime import datetime
 import json
 import pytz
 import os
+import asyncio
 from dotenv import load_dotenv
 from keep_alive import keep_alive
+import logging
+
+# === Setup logging ===
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger('discord_bot')
 
 # === Load environment variables ===
 load_dotenv()
@@ -15,11 +25,25 @@ TOKEN = os.getenv("TOKEN")
 # === Bot setup ===
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+intents.guilds = True
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents,
+    reconnect=True,  # Auto-reconnect on disconnect
+    heartbeat_timeout=60.0  # Increase heartbeat timeout
+)
 tree = bot.tree
 romania_tz = pytz.timezone('Europe/Bucharest')
 last_reminder_sent = {"hour": None, "minute": None}
 last_daily_post_day = None
+
+# === Health monitoring ===
+bot_health = {
+    "last_heartbeat": None,
+    "is_healthy": True,
+    "connection_losses": 0,
+    "last_task_run": None
+}
 
 # === Usage tracking (local JSON) ===
 USAGE_FILE = "command_usage.json"
@@ -31,7 +55,7 @@ def load_usage():
     except FileNotFoundError:
         return {}
     except Exception as e:
-        print(f"[ERROR loading usage file]: {e}")
+        logger.error(f"Error loading usage file: {e}")
         return {}
 
 def save_usage(data):
@@ -39,7 +63,7 @@ def save_usage(data):
         with open(USAGE_FILE, "w") as f:
             json.dump(data, f, indent=4)
     except Exception as e:
-        print(f"[ERROR saving usage file]: {e}")
+        logger.error(f"Error saving usage file: {e}")
 
 def increment_usage(command_name: str):
     usage_data = load_usage()
@@ -53,90 +77,90 @@ def get_usage(command_name: str) -> int:
 # === Auxiliary Functions ===
 def load_calendar():
     try:
-        with open("calendar.json", "r") as f:
+        with open("calendar.json", "r", encoding='utf-8') as f:
             data = json.load(f)
         calendar_data = data.get("EVENTS_CALENDAR", {})
-        print(f"✅ Loaded calendar with {len(calendar_data)} events")
+        logger.info(f"Loaded calendar with {len(calendar_data)} events")
         return calendar_data
     except FileNotFoundError:
-        print("[ERROR] calendar.json not found!")
+        logger.error("calendar.json not found!")
         return {}
     except json.JSONDecodeError as e:
-        print(f"[ERROR] Invalid JSON in calendar.json: {e}")
+        logger.error(f"Invalid JSON in calendar.json: {e}")
         return {}
     except Exception as e:
-        print(f"[ERROR loading calendar]: {e}")
+        logger.error(f"Error loading calendar: {e}")
         return {}
 
 def load_event_names():
     try:
-        with open("event_names.json", "r") as f:
+        with open("event_names.json", "r", encoding='utf-8') as f:
             data = json.load(f)
-        print(f"✅ Loaded {len(data)} event names")
+        logger.info(f"Loaded {len(data)} event names")
         return data
     except FileNotFoundError:
-        print("[WARNING] event_names.json not found, using event codes as names")
+        logger.warning("event_names.json not found, using event codes as names")
         return {}
     except json.JSONDecodeError as e:
-        print(f"[ERROR] Invalid JSON in event_names.json: {e}")
+        logger.error(f"Invalid JSON in event_names.json: {e}")
         return {}
     except Exception as e:
-        print(f"[ERROR loading event names]: {e}")
+        logger.error(f"Error loading event names: {e}")
         return {}
 
 def load_event_descriptions():
     try:
-        with open("event_description.json", "r") as f:
+        with open("event_description.json", "r", encoding='utf-8') as f:
             data = json.load(f)
-        print(f"✅ Loaded {len(data)} event descriptions")
+        logger.info(f"Loaded {len(data)} event descriptions")
         return data
     except FileNotFoundError:
-        print("[WARNING] event_description.json not found, using default descriptions")
+        logger.warning("event_description.json not found, using default descriptions")
         return {}
     except json.JSONDecodeError as e:
-        print(f"[ERROR] Invalid JSON in event_description.json: {e}")
+        logger.error(f"Invalid JSON in event_description.json: {e}")
         return {}
     except Exception as e:
-        print(f"[ERROR loading event descriptions]: {e}")
+        logger.error(f"Error loading event descriptions: {e}")
         return {}
 
 def load_reminder_config():
     try:
-        with open("reminder_config.json", "r") as f:
+        with open("reminder_config.json", "r", encoding='utf-8') as f:
             config = json.load(f)
         if not config.get("channel_id") or not config.get("times"):
-            print("[WARNING] Reminder config is invalid or empty")
+            logger.warning("Reminder config is invalid or empty")
             return {"channel_id": None, "times": []}
-        print(f"✅ Loaded reminder config with {len(config['times'])} reminder times")
+        logger.info(f"Loaded reminder config with {len(config['times'])} reminder times")
         return config
     except FileNotFoundError:
-        print("[WARNING] reminder_config.json not found, reminders disabled")
+        logger.warning("reminder_config.json not found, reminders disabled")
         return {"channel_id": None, "times": []}
     except json.JSONDecodeError as e:
-        print(f"[ERROR] Invalid JSON in reminder_config.json: {e}")
+        logger.error(f"Invalid JSON in reminder_config.json: {e}")
         return {"channel_id": None, "times": []}
     except Exception as e:
-        print(f"[ERROR loading reminder config]: {e}")
+        logger.error(f"Error loading reminder config: {e}")
         return {"channel_id": None, "times": []}
 
 def load_bot_config():
     try:
-        with open("bot_config.json", "r") as f:
+        with open("bot_config.json", "r", encoding='utf-8') as f:
             config = json.load(f)
-        print(f"✅ Loaded bot config")
+        logger.info("Loaded bot config")
         return config
     except FileNotFoundError:
-        print("[WARNING] bot_config.json not found, using defaults")
+        logger.warning("bot_config.json not found, using defaults")
         return {
-            "daily_event_channel_id": 1360321533678981332,
+            "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
             "admin_user_id": 550768541767565314
         }
     except Exception as e:
-        print(f"[ERROR loading bot config]: {e}")
+        logger.error(f"Error loading bot config: {e}")
         return {
-            "daily_event_channel_id": 1360321533678981332,
+            "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
             "admin_user_id": 550768541767565314
@@ -167,13 +191,13 @@ async def send_daily_event_post():
     now = datetime.now(romania_tz)
     channel = bot.get_channel(bot_config["daily_event_channel_id"])
     if not channel:
-        print(f"[Daily Event] Channel {bot_config['daily_event_channel_id']} not found.")
-        return
+        logger.error(f"Daily Event channel {bot_config['daily_event_channel_id']} not found")
+        return False
 
     events = check_events_for_day(now.day)
     if not events:
-        print(f"[Daily Event] No events for day {now.day}.")
-        return
+        logger.info(f"No events for day {now.day}")
+        return False
 
     embed = discord.Embed(
         title=f"Today's {now.day} {now.strftime('%B')} Events",
@@ -190,15 +214,43 @@ async def send_daily_event_post():
 
     try:
         await channel.send("@everyone", embed=embed)
-        print(f"[Daily Event] Announcement sent successfully at {now.strftime('%H:%M')}")
+        logger.info(f"Daily event announcement sent successfully at {now.strftime('%H:%M')}")
+        return True
+    except discord.errors.Forbidden:
+        logger.error("Missing permissions to send message in daily event channel")
+        return False
+    except discord.errors.HTTPException as e:
+        logger.error(f"HTTP error sending daily event: {e}")
+        return False
     except Exception as e:
-        print(f"[ERROR sending daily event]: {e}")
+        logger.error(f"Error sending daily event: {e}")
+        return False
+
+# === Health check task ===
+@tasks.loop(seconds=30)
+async def health_check():
+    try:
+        bot_health["last_heartbeat"] = datetime.now(romania_tz)
+        bot_health["is_healthy"] = bot.is_ready() and not bot.is_closed()
+        
+        if not bot_health["is_healthy"]:
+            logger.warning("Bot health check failed - bot not ready or closed")
+        
+    except Exception as e:
+        logger.error(f"Error in health check: {e}")
+        bot_health["is_healthy"] = False
 
 # === Task periodic: daily event post ===
 @tasks.loop(minutes=1)
 async def daily_event_post():
     global last_daily_post_day
     try:
+        bot_health["last_task_run"] = datetime.now(romania_tz)
+        
+        if not bot.is_ready():
+            logger.warning("Bot not ready, skipping daily post check")
+            return
+            
         now = datetime.now(romania_tz)
         current_hour = now.hour
         current_minute = now.minute
@@ -209,11 +261,17 @@ async def daily_event_post():
             current_minute == bot_config["daily_event_minute"] and 
             last_daily_post_day != current_day):
             
-            await send_daily_event_post()
-            last_daily_post_day = current_day
+            success = await send_daily_event_post()
+            if success:
+                last_daily_post_day = current_day
             
     except Exception as e:
-        print(f"[ERROR in daily_event_post task]: {e}")
+        logger.error(f"Error in daily_event_post task: {e}")
+
+@daily_event_post.before_loop
+async def before_daily_event_post():
+    await bot.wait_until_ready()
+    logger.info("Daily event post task is ready")
 
 # === Slash Commands ===
 @tree.command(name="eventnow", description="Shows today's events")
@@ -238,8 +296,9 @@ async def eventnow(interaction: discord.Interaction):
         else:
             await interaction.response.send_message("There are no events today.", ephemeral=True)
         increment_usage("eventnow")
+        logger.info(f"Command /eventnow used by {interaction.user}")
     except Exception as e:
-        print(f"[ERROR /eventnow]: {e}")
+        logger.error(f"Error in /eventnow: {e}")
         if not interaction.response.is_done():
             try:
                 await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
@@ -284,9 +343,10 @@ async def event(interaction: discord.Interaction, day: int):
             )
         await interaction.response.send_message(embed=embed, ephemeral=True)
         increment_usage("event")
+        logger.info(f"Command /event used by {interaction.user} for day {day}")
         
     except Exception as e:
-        print(f"[ERROR /event]: {e}")
+        logger.error(f"Error in /event: {e}")
         if not interaction.response.is_done():
             try:
                 await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
@@ -306,8 +366,9 @@ async def helpevent(interaction: discord.Interaction):
             color=discord.Color.blurple()
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
+        logger.info(f"Command /helpevent used by {interaction.user}")
     except Exception as e:
-        print(f"[ERROR /helpevent]: {e}")
+        logger.error(f"Error in /helpevent: {e}")
 
 @tree.command(name="usage", description="Shows usage stats for each command (admin only)")
 async def usage(interaction: discord.Interaction):
@@ -333,7 +394,7 @@ async def usage(interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
-        print(f"[ERROR /usage]: {e}")
+        logger.error(f"Error in /usage: {e}")
         if not interaction.response.is_done():
             try:
                 await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
@@ -350,11 +411,14 @@ async def eventannounce(interaction: discord.Interaction):
             )
             return
         await interaction.response.defer(ephemeral=True)
-        await send_daily_event_post()
-        await interaction.followup.send("✅ Manual event announcement sent!", ephemeral=True)
+        success = await send_daily_event_post()
+        if success:
+            await interaction.followup.send("✅ Manual event announcement sent!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Failed to send event announcement. Check logs.", ephemeral=True)
         
     except Exception as e:
-        print(f"[ERROR /eventannounce]: {e}")
+        logger.error(f"Error in /eventannounce: {e}")
         if not interaction.response.is_done():
             try:
                 await interaction.response.send_message("❌ Internal problem. Try later.", ephemeral=True)
@@ -382,16 +446,58 @@ async def reloadconfig(interaction: discord.Interaction):
         bot_config = load_bot_config()
         
         await interaction.followup.send("✅ All configuration files reloaded successfully!", ephemeral=True)
+        logger.info(f"Configuration reloaded by {interaction.user}")
         
     except Exception as e:
-        print(f"[ERROR /reloadconfig]: {e}")
+        logger.error(f"Error in /reloadconfig: {e}")
         await interaction.followup.send("❌ Error reloading configurations.", ephemeral=True)
+
+@tree.command(name="botstatus", description="Shows bot health and status (admin only)")
+async def botstatus(interaction: discord.Interaction):
+    try:
+        if interaction.user.id != bot_config["admin_user_id"]:
+            await interaction.response.send_message(
+                "❌ You don't have permission to use this command.",
+                ephemeral=True
+            )
+            return
+
+        now = datetime.now(romania_tz)
+        uptime = (now - bot_health.get("startup_time", now)).total_seconds() / 3600
+        
+        embed = discord.Embed(
+            title="🤖 Bot Status",
+            color=discord.Color.green() if bot_health["is_healthy"] else discord.Color.red()
+        )
+        embed.add_field(name="Status", value="✅ Healthy" if bot_health["is_healthy"] else "❌ Unhealthy", inline=True)
+        embed.add_field(name="Bot Ready", value="✅ Yes" if bot.is_ready() else "❌ No", inline=True)
+        embed.add_field(name="Latency", value=f"{round(bot.latency * 1000)}ms", inline=True)
+        embed.add_field(name="Uptime", value=f"{uptime:.2f} hours", inline=True)
+        embed.add_field(name="Servers", value=f"{len(bot.guilds)}", inline=True)
+        embed.add_field(name="Connection Losses", value=f"{bot_health['connection_losses']}", inline=True)
+        
+        if bot_health["last_heartbeat"]:
+            last_hb = (now - bot_health["last_heartbeat"]).total_seconds()
+            embed.add_field(name="Last Heartbeat", value=f"{last_hb:.0f}s ago", inline=True)
+        
+        if bot_health["last_task_run"]:
+            last_task = (now - bot_health["last_task_run"]).total_seconds()
+            embed.add_field(name="Last Task Run", value=f"{last_task:.0f}s ago", inline=True)
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        logger.error(f"Error in /botstatus: {e}")
 
 # === Reminder task ===
 @tasks.loop(minutes=1)
 async def reminder_post():
     global last_reminder_sent
     try:
+        if not bot.is_ready():
+            logger.warning("Bot not ready, skipping reminder check")
+            return
+            
         if not reminder_config.get("channel_id") or not reminder_config.get("times"):
             return
 
@@ -407,7 +513,7 @@ async def reminder_post():
             if current_hour == t["hour"] and current_minute == t["minute"]:
                 channel = bot.get_channel(reminder_config["channel_id"])
                 if not channel:
-                    print(f"[Reminder] Channel {reminder_config['channel_id']} not found.")
+                    logger.error(f"Reminder channel {reminder_config['channel_id']} not found")
                     return
 
                 embed = discord.Embed(
@@ -424,38 +530,77 @@ async def reminder_post():
                 try:
                     await channel.send(embed=embed)
                     last_reminder_sent = {"hour": current_hour, "minute": current_minute}
-                    print(f"[Reminder] Sent at {now.strftime('%H:%M')}")
+                    logger.info(f"Reminder sent at {now.strftime('%H:%M')}")
+                except discord.errors.Forbidden:
+                    logger.error("Missing permissions to send reminder")
                 except Exception as e:
-                    print(f"[ERROR sending reminder]: {e}")
+                    logger.error(f"Error sending reminder: {e}")
                 break
 
     except Exception as e:
-        print(f"[ERROR in reminder_post task]: {e}")
+        logger.error(f"Error in reminder_post task: {e}")
 
-# === Bot ready ===
+@reminder_post.before_loop
+async def before_reminder_post():
+    await bot.wait_until_ready()
+    logger.info("Reminder post task is ready")
+
+# === Bot events for connection monitoring ===
 @bot.event
 async def on_ready():
+    bot_health["startup_time"] = datetime.now(romania_tz)
     await bot.change_presence(activity=discord.Game(name="/helpevent"))
-    print(f"✅ Logged in as {bot.user}")
-    print(f"✅ Bot is in {len(bot.guilds)} server(s)")
+    logger.info(f"✅ Logged in as {bot.user}")
+    logger.info(f"✅ Bot is in {len(bot.guilds)} server(s)")
+    logger.info(f"✅ Discord.py version: {discord.__version__}")
     
     try:
         synced = await tree.sync()
-        print(f"✅ Synced {len(synced)} command(s)")
+        logger.info(f"✅ Synced {len(synced)} command(s)")
     except Exception as e:
-        print(f"❌ Command sync error: {e}")
+        logger.error(f"Command sync error: {e}")
     
     # Start tasks
+    if not health_check.is_running():
+        health_check.start()
+        logger.info("✅ Health check task started")
+    
     if not daily_event_post.is_running():
         daily_event_post.start()
-        print("✅ Daily event post task started")
+        logger.info("✅ Daily event post task started")
     
     if not reminder_post.is_running() and reminder_config.get("channel_id"):
         reminder_post.start()
-        print("✅ Reminder post task started")
+        logger.info("✅ Reminder post task started")
     elif not reminder_config.get("channel_id"):
-        print("⚠️ Reminder task not started (no channel configured)")
+        logger.warning("⚠️ Reminder task not started (no channel configured)")
+
+@bot.event
+async def on_disconnect():
+    bot_health["connection_losses"] += 1
+    logger.warning(f"⚠️ Bot disconnected from Discord (Loss #{bot_health['connection_losses']})")
+
+@bot.event
+async def on_resumed():
+    logger.info("✅ Bot reconnected and resumed session")
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    logger.error(f"❌ Error in event {event}: {args} {kwargs}")
+
+# === Graceful shutdown ===
+async def shutdown():
+    logger.info("Shutting down bot gracefully...")
+    await bot.close()
 
 # === Keep alive and run ===
-keep_alive()
-bot.run(TOKEN)
+if __name__ == "__main__":
+    keep_alive()
+    try:
+        bot.run(TOKEN, reconnect=True)
+    except KeyboardInterrupt:
+        logger.info("Received keyboard interrupt")
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+    finally:
+        logger.info("Bot stopped")
