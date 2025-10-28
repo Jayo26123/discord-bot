@@ -155,7 +155,7 @@ def load_bot_config():
             "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_id": 550768541767565314
+            "admin_user_ids": [550768541767565314, 650380866941616156]
         }
     except Exception as e:
         logger.error(f"Error loading bot config: {e}")
@@ -163,7 +163,7 @@ def load_bot_config():
             "daily_event_channel_id": 1130645960113000498,
             "daily_event_hour": 10,
             "daily_event_minute": 0,
-            "admin_user_id": 550768541767565314
+            "admin_user_ids": [550768541767565314, 650380866941616156]
         }
 
 # Load all configurations
@@ -373,7 +373,7 @@ async def helpevent(interaction: discord.Interaction):
 @tree.command(name="usage", description="Shows usage stats for each command (admin only)")
 async def usage(interaction: discord.Interaction):
     try:
-        if interaction.user.id != bot_config["admin_user_id"]:
+        if interaction.user.id not in bot_config.get("admin_user_ids", []):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
@@ -404,7 +404,7 @@ async def usage(interaction: discord.Interaction):
 @tree.command(name="eventannounce", description="Manually triggers today's event announcement (admin only)")
 async def eventannounce(interaction: discord.Interaction):
     try:
-        if interaction.user.id != bot_config["admin_user_id"]:
+        if interaction.user.id not in bot_config.get("admin_user_ids", []):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
@@ -429,7 +429,7 @@ async def eventannounce(interaction: discord.Interaction):
 async def reloadconfig(interaction: discord.Interaction):
     global calendar, event_names, event_descriptions, reminder_config, bot_config
     try:
-        if interaction.user.id != bot_config["admin_user_id"]:
+        if interaction.user.id not in bot_config.get("admin_user_ids", []):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
@@ -455,7 +455,7 @@ async def reloadconfig(interaction: discord.Interaction):
 @tree.command(name="botstatus", description="Shows bot health and status (admin only)")
 async def botstatus(interaction: discord.Interaction):
     try:
-        if interaction.user.id != bot_config["admin_user_id"]:
+        if interaction.user.id not in bot_config.get("admin_user_ids", []):
             await interaction.response.send_message(
                 "❌ You don't have permission to use this command.",
                 ephemeral=True
