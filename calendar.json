@@ -65,7 +65,7 @@
 
         "PVM_EVENT" : {
             
-            "1/8/22/29" : [
+            "1/15/29" : [
                 { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 20, "END_MINUTE" : 30 }
             ]
         },
