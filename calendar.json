@@ -72,17 +72,17 @@
             ]
         },
 
+        "SEASONAL_WHEEL_EVENT" : {
+
+            "1/4/8/11/15/18/22/25" : [
+                { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
+            ]
+        },
+
         "DESTINYSWHEEL_EVENT" : {
             
             "5/7/12/14/19/21/26/28" : [
                 { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
-            ]
-        },
-
-        "⁨⁨SEASONAL_WHEEL_EVENT" : {
-            
-            "1/4/8/11/15/18/22/25" : [
-                { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
