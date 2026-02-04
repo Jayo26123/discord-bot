@@ -88,7 +88,7 @@
 
         "BLACK_JACK_EVENT" : {
 
-            "1/7/8//14/15/21/22/28" : [
+            "1/7/8/14/15/21/22/28" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
