@@ -8,7 +8,6 @@
   "COMBAT_ZONE_EVENT": "Combat Zone Event",
   "COMEBACK_EVENT": "Loyality Event",
   "DESTINYSWHEEL_EVENT": "Destinys Wheel Event",
-  "SEASONAL_WHEEL_EVENT": "Seasonal Wheel Event",
   "DOJANG35_CLASIC_EVENT": "Dojang35 Clasic Event",
   "DOJANG35_UNIVERSAL_EVENT": "Dojang35 Universal Event",
   "DOJANG75_CLASIC_EVENT": "Dojang75 Clasic Event",
@@ -58,5 +57,6 @@
   "BOSS_RESPAWN_FREENZY_EVENT": "Boss Respawn Freenzy Event",
   "SERPENT_INVASION_EVENT": "Serpent Invasion",
   "BOSSES_INVASION": "Boss Invasion Event",
+  "SEASONAL_WHEEL_EVENT": "Seasonal Wheel Event",
   "SECRET_MAPS_EVENT": "Secret Maps Event"
 }
