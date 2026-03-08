@@ -2,56 +2,56 @@
     "EVENTS_CALENDAR" : {
         "SEASONAL_EVENT" : {
 
-            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28" : [
+            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/30/31" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
         "BEGINNER_EVENT" : {
 
-            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28" : [
+            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/30/31" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
         "COMEBACK_EVENT" : {
 
-            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28" : [
+            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/30/31" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
         "KINGDOM_WAR_FLAG_EVENT" : {
             
-            "1/8/15/22" : [
+            "1/8/15/22/29" : [
                 { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 19, "END_MINUTE" : 30 }
             ]
         },
 
         "DOUBLE_ALIGNMENT_EVENT" : {
 
-            "1/6/7/8/13/14/15/20/21/22/27/28" : [
+            "1/6/7/8/13/14/15/20/21/22/27/28/29" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
         "ENCHANT_EVENT" : {
             
-            "1/8/15/22" : [
+            "1/8/15/22/29" : [
                 { "START_HOUR" : 10, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 0 }
             ]
         },
 
         "COLLECT_LETTERS_EVENT" : {
             
-            "5/12/19/26" : [
+            "2/9/16/23/30" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
         "ELF_HUNT_EVENT" : {
             
-            "1/6/7/8/13/14/15/20/21/22/27/28" : [
+            "1/6/7/8/13/14/15/20/21/22/27/28/29" : [
                 { "START_HOUR" : 9, "START_MINUTE" : 0, "END_HOUR" : 9, "END_MINUTE" : 10 },
                 { "START_HOUR" : 16, "START_MINUTE" : 0, "END_HOUR" : 16, "END_MINUTE" : 10 },
                 { "START_HOUR" : 21, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 10 }
@@ -60,7 +60,7 @@
 
         "SYMBOL_EVENT" : {
             
-            "6/13/20/27" : [
+            "3/10/17/24/31" : [
                 { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
@@ -81,7 +81,7 @@
 
         "DESTINYSWHEEL_EVENT" : {
             
-            "5/7/12/14/19/21/26/28" : [
+            "4/7/11/14/18/21/25/28" : [
                 { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
