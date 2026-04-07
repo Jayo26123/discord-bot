@@ -189,7 +189,7 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
             inline=False
         )
 
-        # Descriere cu icon
+        # Descriere
         embed.add_field(
             name="\u200b",
             value=f"📝 {event['description']}",
@@ -204,7 +204,7 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
                 inline=False
             )
 
-        # Separator între evenimente
+        # Separator
         embed.add_field(name="\u200b", value="────────────────────────────────────", inline=False)
 
     if image_url:
