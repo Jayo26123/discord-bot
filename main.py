@@ -127,7 +127,7 @@ def get_server_data(guild_id: int) -> dict | None:
 def get_server_config(guild_id: int) -> dict | None:
     return bot_config.get("servers", {}).get(str(guild_id))
 
-# ====================== FINAL CLEAN DESIGN ======================
+# ====================== FINAL DESIGN - EXACT CUM AI CERUT ======================
 def check_events_for_day(day: int, guild_id: int) -> list[dict]:
     data = get_server_data(guild_id)
     if not data:
@@ -156,7 +156,6 @@ def check_events_for_day(day: int, guild_id: int) -> list[dict]:
                     start_str = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end_str   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
 
-                    # Duration rounding
                     start_dt = datetime(2026, 1, 1, t['START_HOUR'], t['START_MINUTE'])
                     end_dt   = datetime(2026, 1, 1, t['END_HOUR'], t['END_MINUTE'])
                     minutes = int((end_dt - start_dt).total_seconds() / 60)
@@ -182,21 +181,21 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
     )
 
     for event in events:
-        # Event Title
+        # Event Name
         embed.add_field(
             name=f"🔹 **{event['name']}**",
             value="\u200b",
             inline=False
         )
 
-        # Description - closer to title
+        # Description (no big gap)
         embed.add_field(
             name="\u200b",
             value=f"📝 {event['description']}",
             inline=False
         )
 
-        # Time slots: "12:00 – 12:29 - 30 min"  (on the same line)
+        # Time slots on same line: 00:00 – 23:59 - 1 hour
         for slot in event["slots"]:
             embed.add_field(
                 name=f"🕒 `{slot['time']}` - **{slot['duration']}**",
@@ -204,8 +203,12 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
                 inline=False
             )
 
-        # Small spacing between events
-        embed.add_field(name="\u200b", value="\u200b", inline=False)
+        # Beautiful separator between events
+        embed.add_field(
+            name="\u200b",
+            value="━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━",
+            inline=False
+        )
 
     if image_url:
         embed.set_image(url=image_url)
@@ -221,7 +224,6 @@ def is_admin(user_id: int) -> bool:
 async def send_daily_event_post(guild_id: int) -> bool:
     srv_config = get_server_config(guild_id)
     if not srv_config:
-        logger.warning(f"No config found for guild {guild_id}")
         return False
 
     now = datetime.now(romania_tz)
@@ -249,7 +251,7 @@ async def send_daily_event_post(guild_id: int) -> bool:
         return False
 
 
-# === Daily event task ===
+# === Tasks ===
 @tasks.loop(minutes=1)
 async def daily_event_post():
     try:
@@ -278,7 +280,7 @@ async def before_daily_event_post():
     logger.info("Daily event post task is ready")
 
 
-# === Slash Commands (only the important ones are shown fully) ===
+# === Slash Commands ===
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
     try:
@@ -361,7 +363,11 @@ async def usage(interaction: discord.Interaction):
         await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
         return
     await interaction.response.defer(ephemeral=True)
-    data = {"eventnow": get_usage("eventnow"), "event": get_usage("event"), "helpevent": get_usage("helpevent")}
+    data = {
+        "eventnow": get_usage("eventnow"),
+        "event": get_usage("event"),
+        "helpevent": get_usage("helpevent")
+    }
     embed = discord.Embed(title="📊 Command Usage", color=discord.Color.green())
     for cmd, cnt in data.items():
         embed.add_field(name=f"/{cmd}", value=f"{cnt} uses", inline=False)
@@ -404,7 +410,7 @@ async def on_ready():
     if not daily_event_post.is_running():
         daily_event_post.start()
 
-# === Run ===
+# === Run bot ===
 if __name__ == "__main__":
     keep_alive()
     bot.run(TOKEN, reconnect=True)
