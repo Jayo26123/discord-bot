@@ -180,40 +180,33 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
         color=discord.Color.from_rgb(30, 31, 34)
     )
 
-    for event in events:
-        # Event Name
-        embed.add_field(
-            name=f"🔹 **{event['name']}**",
-            value="\u200b",
-            inline=False
-        )
-
-        # Description (no big gap)
-        embed.add_field(
-            name="\u200b",
-            value=f"📝 {event['description']}",
-            inline=False
-        )
-
-        # Time slots on same line: 00:00 – 23:59 - 1 hour
+    for i, event in enumerate(events):
+        # Build time slots text
+        slots_text = ""
         for slot in event["slots"]:
-            embed.add_field(
-                name=f"🕒 `{slot['time']}` - **{slot['duration']}**",
-                value="\u200b",
-                inline=False
-            )
+            slots_text += f"• `{slot['time']}` ({slot['duration']})\n"
 
-        # Beautiful separator between events
+        # Add separator EXCEPT for last event
+        separator = "\n━━━━━━━━━━━━━━━━━━━━━━━\n" if i < len(events) - 1 else ""
+
+        value = (
+            f"**Description:**\n{event['description']}\n\n"
+            f"**Schedule:**\n{slots_text}"
+            f"{separator}"
+        )
+
         embed.add_field(
-            name="\u200b",
-            value="━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━",
+            name=f"📌 {event['name']}",
+            value=value,
             inline=False
         )
 
     if image_url:
         embed.set_image(url=image_url)
 
-    embed.set_footer(text="Event posted automatically")
+    embed.set_footer(text="Automatically generated event schedule")
+    embed.timestamp = datetime.utcnow()
+
     return embed
 
 
