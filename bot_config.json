@@ -10,7 +10,8 @@
         "daily_event_minute": 0,
         "calendar_file": "calendar_rodnia.json",
         "event_names_file": "event_names_rodnia.json",
-        "event_descriptions_file": "event_descriptions_rodnia.json"
+        "event_descriptions_file": "event_descriptions_rodnia.json",
+        "embed_image_url": "https://i.imgur.com/q3PYcgP.png"
       },
       "1467961561963298818": {
         "name": "Odegon",
@@ -19,7 +20,8 @@
         "daily_event_minute": 0,
         "calendar_file": "calendar_odegon.json",
         "event_names_file": "event_names_odegon.json",
-        "event_descriptions_file": "event_descriptions_odegon.json"
+        "event_descriptions_file": "event_descriptions_odegon.json",
+        "embed_image_url": "https://i.imgur.com/F2m40Hu.png"
       }
     }
   }
