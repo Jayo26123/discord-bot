@@ -127,7 +127,7 @@ def get_server_data(guild_id: int) -> dict | None:
 def get_server_config(guild_id: int) -> dict | None:
     return bot_config.get("servers", {}).get(str(guild_id))
 
-# ====================== DESIGN NOU - VERTICAL & CURAT ======================
+# ====================== MODERN EVENT DISPLAY ======================
 def check_events_for_day(day: int, guild_id: int) -> list[dict]:
     data = get_server_data(guild_id)
     if not data:
@@ -156,13 +156,13 @@ def check_events_for_day(day: int, guild_id: int) -> list[dict]:
                     start_str = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end_str   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
 
-                    # Calcul și rotunjire durată
+                    # Duration calculation and rounding
                     start_dt = datetime(2026, 1, 1, t['START_HOUR'], t['START_MINUTE'])
                     end_dt   = datetime(2026, 1, 1, t['END_HOUR'], t['END_MINUTE'])
                     minutes = int((end_dt - start_dt).total_seconds() / 60)
 
                     if minutes >= 55:
-                        duration_str = "1 oră"
+                        duration_str = "1 hour"
                     else:
                         rounded = round(minutes / 5) * 5
                         duration_str = f"{rounded} min"
@@ -182,30 +182,30 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
     )
 
     for event in events:
-        # Nume eveniment
+        # Event name
         embed.add_field(
             name=f"🔹 **{event['name']}**",
             value="\u200b",
             inline=False
         )
 
-        # Descriere
+        # Description (closer to title)
         embed.add_field(
             name="\u200b",
             value=f"📝 {event['description']}",
             inline=False
         )
 
-        # Intervale verticale (unul sub altul)
+        # Time slots with duration on the right (same line)
         for slot in event["slots"]:
             embed.add_field(
                 name=f"🕒 `{slot['time']}`",
                 value=f"**{slot['duration']}**",
-                inline=False
+                inline=True
             )
 
-        # Separator
-        embed.add_field(name="\u200b", value="────────────────────────────────────", inline=False)
+        # Small separator between events
+        embed.add_field(name="\u200b", value="\u200b", inline=False)
 
     if image_url:
         embed.set_image(url=image_url)
@@ -227,12 +227,12 @@ async def send_daily_event_post(guild_id: int) -> bool:
     now = datetime.now(romania_tz)
     channel = bot.get_channel(srv_config["daily_event_channel_id"])
     if not channel:
-        logger.error(f"Channel not found for {srv_config['name']}")
+        logger.error(f"Channel not found for {srv_config.get('name', guild_id)}")
         return False
 
     events = check_events_for_day(now.day, guild_id)
     if not events:
-        logger.info(f"[{srv_config['name']}] No events for day {now.day}")
+        logger.info(f"[{srv_config.get('name', guild_id)}] No events for day {now.day}")
         return False
 
     image_url = srv_config.get("embed_image_url")
@@ -244,10 +244,10 @@ async def send_daily_event_post(guild_id: int) -> bool:
 
     try:
         await channel.send("@everyone", embed=embed)
-        logger.info(f"[{srv_config['name']}] Daily event announcement sent")
+        logger.info(f"[{srv_config.get('name', guild_id)}] Daily event sent")
         return True
     except Exception as e:
-        logger.error(f"[{srv_config['name']}] Error sending daily event: {e}")
+        logger.error(f"Error sending daily event: {e}")
         return False
 
 
@@ -309,7 +309,6 @@ async def eventnow(interaction: discord.Interaction):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
         increment_usage("eventnow")
-        logger.info(f"/eventnow used on {srv_config['name']}")
     except Exception as e:
         logger.error(f"Error in /eventnow: {e}")
 
@@ -398,7 +397,6 @@ async def reloadconfig(interaction: discord.Interaction):
     reminder_config = load_reminder_config()
     server_data = load_all_server_data(bot_config)
     await interaction.followup.send("✅ All configuration files reloaded successfully!", ephemeral=True)
-    logger.info("Configuration reloaded by admin")
 
 @tree.command(name="botstatus", description="Shows bot health and status (admin only)")
 async def botstatus(interaction: discord.Interaction):
@@ -419,14 +417,13 @@ async def on_ready():
     logger.info(f"✅ Logged in as {bot.user}")
 
     try:
-        synced = await tree.sync()
-        logger.info(f"✅ Synced {len(synced)} commands")
+        await tree.sync()
+        logger.info("Commands synced")
     except Exception as e:
-        logger.error(f"Command sync error: {e}")
+        logger.error(f"Sync error: {e}")
 
     if not daily_event_post.is_running():
         daily_event_post.start()
-        logger.info("✅ Daily event post task started")
 
 # === Run bot ===
 if __name__ == "__main__":
