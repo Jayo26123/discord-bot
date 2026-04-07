@@ -116,7 +116,7 @@ def load_all_server_data(config: dict) -> dict:
         }
     return data
 
-# Initial load
+# === Initial load ===
 bot_config = load_bot_config()
 reminder_config = load_reminder_config()
 server_data = load_all_server_data(bot_config)
@@ -127,9 +127,8 @@ def get_server_data(guild_id: int) -> dict | None:
 def get_server_config(guild_id: int) -> dict | None:
     return bot_config.get("servers", {}).get(str(guild_id))
 
-# ====================== DESIGN NOU MODERN ======================
+# ====================== DESIGN NOU - VERTICAL & CURAT ======================
 def check_events_for_day(day: int, guild_id: int) -> list[dict]:
-    """Returnează evenimentele grupate cu format modern (ca în poză)"""
     data = get_server_data(guild_id)
     if not data:
         return []
@@ -147,13 +146,17 @@ def check_events_for_day(day: int, guild_id: int) -> list[dict]:
         for days_str, timings in dates.items():
             if str(day) in days_str.split("/"):
                 if code not in events_dict:
-                    events_dict[code] = {"name": name, "description": description, "slots": []}
+                    events_dict[code] = {
+                        "name": name,
+                        "description": description,
+                        "slots": []
+                    }
 
                 for t in timings:
                     start_str = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end_str   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
 
-                    # Rotunjire durată
+                    # Calcul și rotunjire durată
                     start_dt = datetime(2026, 1, 1, t['START_HOUR'], t['START_MINUTE'])
                     end_dt   = datetime(2026, 1, 1, t['END_HOUR'], t['END_MINUTE'])
                     minutes = int((end_dt - start_dt).total_seconds() / 60)
@@ -171,10 +174,7 @@ def check_events_for_day(day: int, guild_id: int) -> list[dict]:
 
     return list(events_dict.values())
 
-def is_admin(user_id: int) -> bool:
-    return user_id in bot_config.get("admin_user_ids", [])
 
-# === Funcție comună pentru embed modern ===
 def create_events_embed(title: str, events: list[dict], image_url: str = None) -> discord.Embed:
     embed = discord.Embed(
         title=title,
@@ -182,43 +182,57 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
     )
 
     for event in events:
-        # Nume + descriere
+        # Nume eveniment
         embed.add_field(
             name=f"🔹 **{event['name']}**",
-            value=event['description'],
+            value="\u200b",
             inline=False
         )
-        
-        # Casete cu ore + durată
+
+        # Descriere cu icon
+        embed.add_field(
+            name="\u200b",
+            value=f"📝 {event['description']}",
+            inline=False
+        )
+
+        # Intervale verticale (unul sub altul)
         for slot in event["slots"]:
             embed.add_field(
-                name=f"`{slot['time']}`",
+                name=f"🕒 `{slot['time']}`",
                 value=f"**{slot['duration']}**",
-                inline=True
+                inline=False
             )
 
         # Separator între evenimente
-        embed.add_field(name="\u200b", value="\u200b", inline=False)
+        embed.add_field(name="\u200b", value="────────────────────────────────────", inline=False)
 
     if image_url:
         embed.set_image(url=image_url)
-    
+
     embed.set_footer(text="Event posted automatically")
     return embed
+
+
+def is_admin(user_id: int) -> bool:
+    return user_id in bot_config.get("admin_user_ids", [])
 
 # === Send daily event post ===
 async def send_daily_event_post(guild_id: int) -> bool:
     srv_config = get_server_config(guild_id)
     if not srv_config:
+        logger.warning(f"No config found for guild {guild_id}")
         return False
 
     now = datetime.now(romania_tz)
     channel = bot.get_channel(srv_config["daily_event_channel_id"])
     if not channel:
+        logger.error(f"Channel not found for {srv_config['name']}")
         return False
 
     events = check_events_for_day(now.day, guild_id)
     if not events:
+        logger.info(f"[{srv_config['name']}] No events for day {now.day}")
         return False
 
     image_url = srv_config.get("embed_image_url")
@@ -230,13 +244,14 @@ async def send_daily_event_post(guild_id: int) -> bool:
 
     try:
         await channel.send("@everyone", embed=embed)
-        logger.info(f"[{srv_config['name']}] Daily event sent successfully")
+        logger.info(f"[{srv_config['name']}] Daily event announcement sent")
         return True
     except Exception as e:
         logger.error(f"[{srv_config['name']}] Error sending daily event: {e}")
         return False
 
-# === Tasks ===
+
+# === Daily event task ===
 @tasks.loop(minutes=1)
 async def daily_event_post():
     try:
@@ -246,7 +261,10 @@ async def daily_event_post():
         current_day = now.day
 
         for guild_id_str, srv_config in bot_config.get("servers", {}).items():
-            if now.hour != srv_config.get("daily_event_hour", 10) or now.minute != srv_config.get("daily_event_minute", 0):
+            target_hour = srv_config.get("daily_event_hour", 10)
+            target_minute = srv_config.get("daily_event_minute", 0)
+
+            if now.hour != target_hour or now.minute != target_minute:
                 continue
 
             guild_id = int(guild_id_str)
@@ -262,7 +280,8 @@ async def daily_event_post():
 @daily_event_post.before_loop
 async def before_daily_event_post():
     await bot.wait_until_ready()
-    logger.info("Daily event post task started")
+    logger.info("Daily event post task is ready")
+
 
 # === Slash Commands ===
 @tree.command(name="eventnow", description="Shows today's events")
@@ -271,7 +290,7 @@ async def eventnow(interaction: discord.Interaction):
         guild_id = interaction.guild_id
         srv_config = get_server_config(guild_id)
         if not srv_config:
-            await interaction.response.send_message("⚠️ This server is not configured in the bot.", ephemeral=True)
+            await interaction.response.send_message("⚠️ This server is not configured.", ephemeral=True)
             return
 
         now = datetime.now(romania_tz)
@@ -290,6 +309,7 @@ async def eventnow(interaction: discord.Interaction):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
         increment_usage("eventnow")
+        logger.info(f"/eventnow used on {srv_config['name']}")
     except Exception as e:
         logger.error(f"Error in /eventnow: {e}")
 
@@ -297,7 +317,8 @@ async def eventnow(interaction: discord.Interaction):
 async def event(interaction: discord.Interaction, day: int):
     try:
         guild_id = interaction.guild_id
-        if not get_server_config(guild_id):
+        srv_config = get_server_config(guild_id)
+        if not srv_config:
             await interaction.response.send_message("⚠️ This server is not configured.", ephemeral=True)
             return
 
@@ -309,7 +330,7 @@ async def event(interaction: discord.Interaction, day: int):
         from calendar import monthrange
         last_day = monthrange(now.year, now.month)[1]
         if day > last_day:
-            await interaction.response.send_message(f"⚠️ Invalid day for {now.strftime('%B')}.", ephemeral=True)
+            await interaction.response.send_message(f"⚠️ Invalid day for this month.", ephemeral=True)
             return
 
         events = check_events_for_day(day, guild_id)
@@ -318,7 +339,7 @@ async def event(interaction: discord.Interaction, day: int):
             increment_usage("event")
             return
 
-        image_url = get_server_config(guild_id).get("embed_image_url")
+        image_url = srv_config.get("embed_image_url")
         embed = create_events_embed(
             title=f"📅 Events on {day} {now.strftime('%B')}",
             events=events,
@@ -333,20 +354,17 @@ async def event(interaction: discord.Interaction, day: int):
 @tree.command(name="helpevent", description="Displays information about event commands")
 async def helpevent(interaction: discord.Interaction):
     embed = discord.Embed(
-        title="📅 Event Commands Help",
+        title="📅 Event Commands",
         description="`/eventnow` — Today's events\n`/event <day>` — Events for a specific day",
         color=discord.Color.blurple()
     )
     await interaction.response.send_message(embed=embed, ephemeral=True)
     increment_usage("helpevent")
 
-# (Restul comenzilor: usage, eventannounce, reloadconfig, botstatus rămân neschimbate)
-# Le-am păstrat pe toate exact ca în varianta ta originală
-
 @tree.command(name="usage", description="Shows usage stats (admin only)")
 async def usage(interaction: discord.Interaction):
     if not is_admin(interaction.user.id):
-        await interaction.response.send_message("❌ No permission.", ephemeral=True)
+        await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
         return
     await interaction.response.defer(ephemeral=True)
     data = {
@@ -359,63 +377,61 @@ async def usage(interaction: discord.Interaction):
         embed.add_field(name=f"/{cmd}", value=f"{cnt} uses", inline=False)
     await interaction.followup.send(embed=embed, ephemeral=True)
 
-@tree.command(name="eventannounce", description="Manually trigger today's announcement (admin only)")
+@tree.command(name="eventannounce", description="Manually triggers today's announcement (admin only)")
 async def eventannounce(interaction: discord.Interaction):
     if not is_admin(interaction.user.id):
-        await interaction.response.send_message("❌ No permission.", ephemeral=True)
+        await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
         return
     await interaction.response.defer(ephemeral=True)
     success = await send_daily_event_post(interaction.guild_id)
-    if success:
-        await interaction.followup.send("✅ Announcement sent!", ephemeral=True)
-    else:
-        await interaction.followup.send("❌ Failed to send.", ephemeral=True)
+    msg = "✅ Announcement sent!" if success else "❌ Failed to send announcement."
+    await interaction.followup.send(msg, ephemeral=True)
 
-@tree.command(name="reloadconfig", description="Reload all config files (admin only)")
+@tree.command(name="reloadconfig", description="Reloads all configuration files (admin only)")
 async def reloadconfig(interaction: discord.Interaction):
     global bot_config, reminder_config, server_data
     if not is_admin(interaction.user.id):
-        await interaction.response.send_message("❌ No permission.", ephemeral=True)
+        await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
         return
     await interaction.response.defer(ephemeral=True)
     bot_config = load_bot_config()
     reminder_config = load_reminder_config()
     server_data = load_all_server_data(bot_config)
-    await interaction.followup.send("✅ Configuration reloaded!", ephemeral=True)
+    await interaction.followup.send("✅ All configuration files reloaded successfully!", ephemeral=True)
+    logger.info("Configuration reloaded by admin")
 
-@tree.command(name="botstatus", description="Bot status (admin only)")
+@tree.command(name="botstatus", description="Shows bot health and status (admin only)")
 async def botstatus(interaction: discord.Interaction):
     if not is_admin(interaction.user.id):
-        await interaction.response.send_message("❌ No permission.", ephemeral=True)
+        await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
         return
     await interaction.response.defer(ephemeral=True)
-    # ... (poți lăsa varianta veche aici dacă vrei, sau spune-mi să o simplific)
     embed = discord.Embed(title="🤖 Bot Status", color=discord.Color.green())
+    embed.add_field(name="Status", value="✅ Online", inline=True)
+    embed.add_field(name="Servers", value=str(len(bot.guilds)), inline=True)
     await interaction.followup.send(embed=embed, ephemeral=True)
 
-# Reminder task (dacă îl folosești)
-@tasks.loop(minutes=1)
-async def reminder_post():
-    # codul vechi rămâne neschimbat
-    pass  # poți pune aici codul original dacă vrei reminder-ul activ
-
-# on_ready
+# === on_ready ===
 @bot.event
 async def on_ready():
     bot_health["startup_time"] = datetime.now(romania_tz)
     await bot.change_presence(activity=discord.Game(name="/eventnow"))
-    logger.info(f"✅ Bot is online as {bot.user}")
+    logger.info(f"✅ Logged in as {bot.user}")
 
     try:
-        await tree.sync()
-        logger.info("Commands synced")
+        synced = await tree.sync()
+        logger.info(f"✅ Synced {len(synced)} commands")
     except Exception as e:
-        logger.error(f"Sync error: {e}")
+        logger.error(f"Command sync error: {e}")
 
     if not daily_event_post.is_running():
         daily_event_post.start()
+        logger.info("✅ Daily event post task started")
 
-# === Run ===
+# === Run bot ===
 if __name__ == "__main__":
     keep_alive()
-    bot.run(TOKEN, reconnect=True)
+    try:
+        bot.run(TOKEN, reconnect=True)
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
