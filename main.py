@@ -184,13 +184,13 @@ def create_events_embed(title: str, events: list[dict], image_url: str = None) -
         # Build time slots text
         slots_text = ""
         for slot in event["slots"]:
-            slots_text += f"• `{slot['time']}` ({slot['duration']})\n"
+            slots_text += f"`{slot['time']}` ({slot['duration']})\n"
 
         # Add separator EXCEPT for last event
-        separator = "\n━━━━━━━━━━━━━━━━━━━━━━━\n" if i < len(events) - 1 else ""
+        separator = "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━\n" if i < len(events) - 1 else ""
 
         value = (
-            f"**Description:**\n{event['description']}\n\n"
+            f"**Description:**\n{event['description']}\n"
             f"**Schedule:**\n{slots_text}"
             f"{separator}"
         )
