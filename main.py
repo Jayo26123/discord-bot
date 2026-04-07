@@ -29,13 +29,15 @@ intents.guilds = True
 bot = commands.Bot(
     command_prefix="!",
     intents=intents,
-    reconnect=True,  # Auto-reconnect on disconnect
-    heartbeat_timeout=60.0  # Increase heartbeat timeout
+    reconnect=True,
+    heartbeat_timeout=60.0
 )
 tree = bot.tree
 romania_tz = pytz.timezone('Europe/Bucharest')
 last_reminder_sent = {"hour": None, "minute": None}
-last_daily_post_day = None
+
+# Tracks last daily post day per guild: { guild_id: day }
+last_daily_post_day = {}
 
 # === Health monitoring ===
 bot_health = {
@@ -74,57 +76,40 @@ def get_usage(command_name: str) -> int:
     usage_data = load_usage()
     return usage_data.get(command_name, 0)
 
-# === Auxiliary Functions ===
-def load_calendar():
-    try:
-        with open("calendar.json", "r", encoding='utf-8') as f:
-            data = json.load(f)
-        calendar_data = data.get("EVENTS_CALENDAR", {})
-        logger.info(f"Loaded calendar with {len(calendar_data)} events")
-        return calendar_data
-    except FileNotFoundError:
-        logger.error("calendar.json not found!")
-        return {}
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in calendar.json: {e}")
-        return {}
-    except Exception as e:
-        logger.error(f"Error loading calendar: {e}")
-        return {}
+# === Per-server data cache ===
+# Stored as: { guild_id_str: { "calendar": {}, "event_names": {}, "event_descriptions": {} } }
+server_data = {}
 
-def load_event_names():
+def load_json_file(filepath: str, label: str) -> dict:
     try:
-        with open("event_names.json", "r", encoding='utf-8') as f:
+        with open(filepath, "r", encoding='utf-8') as f:
             data = json.load(f)
-        logger.info(f"Loaded {len(data)} event names")
+        logger.info(f"Loaded {label} from {filepath}")
         return data
     except FileNotFoundError:
-        logger.warning("event_names.json not found, using event codes as names")
+        logger.warning(f"{filepath} not found ({label}), using empty dict")
         return {}
     except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in event_names.json: {e}")
+        logger.error(f"Invalid JSON in {filepath}: {e}")
         return {}
     except Exception as e:
-        logger.error(f"Error loading event names: {e}")
+        logger.error(f"Error loading {filepath}: {e}")
         return {}
 
-def load_event_descriptions():
+def load_bot_config() -> dict:
     try:
-        with open("event_description.json", "r", encoding='utf-8') as f:
-            data = json.load(f)
-        logger.info(f"Loaded {len(data)} event descriptions")
-        return data
+        with open("bot_config.json", "r", encoding='utf-8') as f:
+            config = json.load(f)
+        logger.info("Loaded bot_config.json")
+        return config
     except FileNotFoundError:
-        logger.warning("event_description.json not found, using default descriptions")
-        return {}
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in event_description.json: {e}")
-        return {}
+        logger.error("bot_config.json not found! Please create it.")
+        return {"admin_user_ids": [], "servers": {}}
     except Exception as e:
-        logger.error(f"Error loading event descriptions: {e}")
-        return {}
+        logger.error(f"Error loading bot_config.json: {e}")
+        return {"admin_user_ids": [], "servers": {}}
 
-def load_reminder_config():
+def load_reminder_config() -> dict:
     try:
         with open("reminder_config.json", "r", encoding='utf-8') as f:
             config = json.load(f)
@@ -143,37 +128,49 @@ def load_reminder_config():
         logger.error(f"Error loading reminder config: {e}")
         return {"channel_id": None, "times": []}
 
-def load_bot_config():
-    try:
-        with open("bot_config.json", "r", encoding='utf-8') as f:
-            config = json.load(f)
-        logger.info("Loaded bot config")
-        return config
-    except FileNotFoundError:
-        logger.warning("bot_config.json not found, using defaults")
-        return {
-            "daily_event_channel_id": 1130645960113000498,
-            "daily_event_hour": 10,
-            "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314]
-        }
-    except Exception as e:
-        logger.error(f"Error loading bot config: {e}")
-        return {
-            "daily_event_channel_id": 1130645960113000498,
-            "daily_event_hour": 10,
-            "daily_event_minute": 0,
-            "admin_user_ids": [550768541767565314]
-        }
+def load_all_server_data(config: dict) -> dict:
+    """Load calendar, event_names, event_descriptions for each server from config."""
+    data = {}
+    for guild_id, srv_config in config.get("servers", {}).items():
+        calendar_raw = load_json_file(srv_config["calendar_file"], f"calendar ({srv_config['name']})")
+        # Support both raw dict and wrapped {"EVENTS_CALENDAR": {...}}
+        if "EVENTS_CALENDAR" in calendar_raw:
+            calendar = calendar_raw["EVENTS_CALENDAR"]
+        else:
+            calendar = calendar_raw
 
-# Load all configurations
-calendar = load_calendar()
-event_names = load_event_names()
-event_descriptions = load_event_descriptions()
-reminder_config = load_reminder_config()
+        data[guild_id] = {
+            "calendar": calendar,
+            "event_names": load_json_file(srv_config["event_names_file"], f"event_names ({srv_config['name']})"),
+            "event_descriptions": load_json_file(srv_config["event_descriptions_file"], f"event_descriptions ({srv_config['name']})")
+        }
+        logger.info(f"Server '{srv_config['name']}' ({guild_id}): {len(calendar)} calendar entries loaded")
+    return data
+
+# === Initial load ===
 bot_config = load_bot_config()
+reminder_config = load_reminder_config()
+server_data = load_all_server_data(bot_config)
 
-def check_events_for_day(day: int):
+# === Helper: get server data for a guild ===
+def get_server_data(guild_id: int) -> dict | None:
+    """Returns the data dict for the given guild, or None if not configured."""
+    return server_data.get(str(guild_id))
+
+def get_server_config(guild_id: int) -> dict | None:
+    """Returns the bot_config entry for the given guild, or None if not configured."""
+    return bot_config.get("servers", {}).get(str(guild_id))
+
+# === Core event lookup ===
+def check_events_for_day(day: int, guild_id: int) -> list[str]:
+    data = get_server_data(guild_id)
+    if not data:
+        return []
+
+    calendar = data["calendar"]
+    event_names = data["event_names"]
+    event_descriptions = data["event_descriptions"]
+
     result = []
     for code, dates in calendar.items():
         name = event_names.get(code, code)
@@ -183,28 +180,33 @@ def check_events_for_day(day: int):
                 for t in timings:
                     start = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
                     end   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
-                    result.append(f"**{name}**\n⏰ Start at: {start}\n⏳ End at: {end}\n📖 **Description:** {description}")
+                    result.append(
+                        f"**{name}**\n"
+                        f"⏰ Start at: {start}\n"
+                        f"⏳ End at: {end}\n"
+                        f"📖 **Description:** {description}"
+                    )
     return result
 
 def is_admin(user_id: int) -> bool:
-    """Check if user is admin"""
-    admin_ids = bot_config.get("admin_user_ids", [])
-    # Backwards compatibility with old config
-    if not admin_ids and "admin_user_id" in bot_config:
-        admin_ids = [bot_config["admin_user_id"]]
-    return user_id in admin_ids
+    return user_id in bot_config.get("admin_user_ids", [])
 
-# === Function to send daily event post ===
-async def send_daily_event_post():
-    now = datetime.now(romania_tz)
-    channel = bot.get_channel(bot_config["daily_event_channel_id"])
-    if not channel:
-        logger.error(f"Daily Event channel {bot_config['daily_event_channel_id']} not found")
+# === Send daily event post for a specific guild ===
+async def send_daily_event_post(guild_id: int) -> bool:
+    srv_config = get_server_config(guild_id)
+    if not srv_config:
+        logger.warning(f"No config found for guild {guild_id}")
         return False
 
-    events = check_events_for_day(now.day)
+    now = datetime.now(romania_tz)
+    channel = bot.get_channel(srv_config["daily_event_channel_id"])
+    if not channel:
+        logger.error(f"[{srv_config['name']}] Daily event channel {srv_config['daily_event_channel_id']} not found")
+        return False
+
+    events = check_events_for_day(now.day, guild_id)
     if not events:
-        logger.info(f"No events for day {now.day}")
+        logger.info(f"[{srv_config['name']}] No events for day {now.day}")
         return False
 
     embed = discord.Embed(
@@ -222,16 +224,16 @@ async def send_daily_event_post():
 
     try:
         await channel.send("@everyone", embed=embed)
-        logger.info(f"Daily event announcement sent successfully at {now.strftime('%H:%M')}")
+        logger.info(f"[{srv_config['name']}] Daily event announcement sent at {now.strftime('%H:%M')}")
         return True
     except discord.errors.Forbidden:
-        logger.error("Missing permissions to send message in daily event channel")
+        logger.error(f"[{srv_config['name']}] Missing permissions to send message in daily event channel")
         return False
     except discord.errors.HTTPException as e:
-        logger.error(f"HTTP error sending daily event: {e}")
+        logger.error(f"[{srv_config['name']}] HTTP error sending daily event: {e}")
         return False
     except Exception as e:
-        logger.error(f"Error sending daily event: {e}")
+        logger.error(f"[{srv_config['name']}] Error sending daily event: {e}")
         return False
 
 # === Health check task ===
@@ -240,39 +242,42 @@ async def health_check():
     try:
         bot_health["last_heartbeat"] = datetime.now(romania_tz)
         bot_health["is_healthy"] = bot.is_ready() and not bot.is_closed()
-        
         if not bot_health["is_healthy"]:
             logger.warning("Bot health check failed - bot not ready or closed")
-        
     except Exception as e:
         logger.error(f"Error in health check: {e}")
         bot_health["is_healthy"] = False
 
-# === Task periodic: daily event post ===
+# === Daily event post task — iterates all configured servers ===
 @tasks.loop(minutes=1)
 async def daily_event_post():
-    global last_daily_post_day
     try:
         bot_health["last_task_run"] = datetime.now(romania_tz)
-        
+
         if not bot.is_ready():
             logger.warning("Bot not ready, skipping daily post check")
             return
-            
+
         now = datetime.now(romania_tz)
-        current_hour = now.hour
-        current_minute = now.minute
         current_day = now.day
 
-        # Check if it's time to post and we haven't posted today yet
-        if (current_hour == bot_config["daily_event_hour"] and 
-            current_minute == bot_config["daily_event_minute"] and 
-            last_daily_post_day != current_day):
-            
-            success = await send_daily_event_post()
+        for guild_id_str, srv_config in bot_config.get("servers", {}).items():
+            target_hour   = srv_config.get("daily_event_hour", 10)
+            target_minute = srv_config.get("daily_event_minute", 0)
+
+            if now.hour != target_hour or now.minute != target_minute:
+                continue
+
+            guild_id = int(guild_id_str)
+            last_day = last_daily_post_day.get(guild_id)
+
+            if last_day == current_day:
+                continue  # Already posted today for this server
+
+            success = await send_daily_event_post(guild_id)
             if success:
-                last_daily_post_day = current_day
-            
+                last_daily_post_day[guild_id] = current_day
+
     except Exception as e:
         logger.error(f"Error in daily_event_post task: {e}")
 
@@ -282,11 +287,20 @@ async def before_daily_event_post():
     logger.info("Daily event post task is ready")
 
 # === Slash Commands ===
+
 @tree.command(name="eventnow", description="Shows today's events")
 async def eventnow(interaction: discord.Interaction):
     try:
+        guild_id = interaction.guild_id
+        if not get_server_config(guild_id):
+            await interaction.response.send_message(
+                "⚠️ This server is not configured in the bot.", ephemeral=True
+            )
+            return
+
         now = datetime.now(romania_tz)
-        events = check_events_for_day(now.day)
+        events = check_events_for_day(now.day, guild_id)
+
         if events:
             embed = discord.Embed(
                 title=f"Today's {now.day} {now.strftime('%B')} Events",
@@ -303,8 +317,9 @@ async def eventnow(interaction: discord.Interaction):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             await interaction.response.send_message("There are no events today.", ephemeral=True)
+
         increment_usage("eventnow")
-        logger.info(f"Command /eventnow used by {interaction.user}")
+        logger.info(f"Command /eventnow used by {interaction.user} on guild {guild_id}")
     except Exception as e:
         logger.error(f"Error in /eventnow: {e}")
         if not interaction.response.is_done():
@@ -316,31 +331,38 @@ async def eventnow(interaction: discord.Interaction):
 @tree.command(name="event", description="Check events for a specific day (1-31)")
 async def event(interaction: discord.Interaction, day: int):
     try:
-        if day < 1 or day > 31:
-            await interaction.response.send_message("⚠️ Please enter a valid day between 1 and 31.", ephemeral=True)
-            return
-
-        now = datetime.now(romania_tz)
-        current_year = now.year
-        current_month = now.month
-        month_name = now.strftime('%B')
-
-        from calendar import monthrange
-        last_day = monthrange(current_year, current_month)[1]
-        if day > last_day:
+        guild_id = interaction.guild_id
+        if not get_server_config(guild_id):
             await interaction.response.send_message(
-                f"⚠️ Day {day} is not valid for {month_name} (max {last_day}).", ephemeral=True
+                "⚠️ This server is not configured in the bot.", ephemeral=True
             )
             return
 
-        events = check_events_for_day(day)
+        if day < 1 or day > 31:
+            await interaction.response.send_message(
+                "⚠️ Please enter a valid day between 1 and 31.", ephemeral=True
+            )
+            return
+
+        now = datetime.now(romania_tz)
+        from calendar import monthrange
+        last_day = monthrange(now.year, now.month)[1]
+        if day > last_day:
+            await interaction.response.send_message(
+                f"⚠️ Day {day} is not valid for {now.strftime('%B')} (max {last_day}).", ephemeral=True
+            )
+            return
+
+        events = check_events_for_day(day, guild_id)
         if not events:
-            await interaction.response.send_message(f"No events found for {day} {month_name}.", ephemeral=True)
+            await interaction.response.send_message(
+                f"No events found for {day} {now.strftime('%B')}.", ephemeral=True
+            )
             increment_usage("event")
             return
 
         embed = discord.Embed(
-            title=f"Events on {day} {month_name}",
+            title=f"Events on {day} {now.strftime('%B')}",
             color=discord.Color.blue()
         )
         for e in events:
@@ -351,8 +373,8 @@ async def event(interaction: discord.Interaction, day: int):
             )
         await interaction.response.send_message(embed=embed, ephemeral=True)
         increment_usage("event")
-        logger.info(f"Command /event used by {interaction.user} for day {day}")
-        
+        logger.info(f"Command /event used by {interaction.user} for day {day} on guild {guild_id}")
+
     except Exception as e:
         logger.error(f"Error in /event: {e}")
         if not interaction.response.is_done():
@@ -381,15 +403,12 @@ async def helpevent(interaction: discord.Interaction):
 @tree.command(name="usage", description="Shows usage stats for each command (admin only)")
 async def usage(interaction: discord.Interaction):
     try:
-        # Check admin permission
         if not is_admin(interaction.user.id):
             await interaction.response.send_message(
-                "❌ You don't have permission to use this command.",
-                ephemeral=True
+                "❌ You don't have permission to use this command.", ephemeral=True
             )
             return
 
-        # Defer immediately after permission check
         await interaction.response.defer(ephemeral=True)
 
         data = {
@@ -397,17 +416,13 @@ async def usage(interaction: discord.Interaction):
             "event":     get_usage("event"),
             "helpevent": get_usage("helpevent")
         }
-        embed = discord.Embed(
-            title="📊 Command Usage",
-            color=discord.Color.green()
-        )
+        embed = discord.Embed(title="📊 Command Usage", color=discord.Color.green())
         for cmd, cnt in data.items():
             embed.add_field(name=f"/{cmd}", value=f"{cnt} uses", inline=False)
-        
+
         await interaction.followup.send(embed=embed, ephemeral=True)
-        
+
     except discord.errors.NotFound:
-        # Interaction already consumed - ignore this error
         pass
     except Exception as e:
         logger.error(f"Error in /usage: {e}")
@@ -415,58 +430,57 @@ async def usage(interaction: discord.Interaction):
 @tree.command(name="eventannounce", description="Manually triggers today's event announcement (admin only)")
 async def eventannounce(interaction: discord.Interaction):
     try:
-        # Check admin permission
         if not is_admin(interaction.user.id):
             await interaction.response.send_message(
-                "❌ You don't have permission to use this command.",
-                ephemeral=True
+                "❌ You don't have permission to use this command.", ephemeral=True
             )
             return
-        
-        # Defer immediately after permission check
+
         await interaction.response.defer(ephemeral=True)
-        
-        # Send the announcement
-        success = await send_daily_event_post()
-        
+
+        guild_id = interaction.guild_id
+        if not get_server_config(guild_id):
+            await interaction.followup.send(
+                "⚠️ This server is not configured in the bot.", ephemeral=True
+            )
+            return
+
+        success = await send_daily_event_post(guild_id)
+
         if success:
             await interaction.followup.send("✅ Manual event announcement sent!", ephemeral=True)
         else:
-            await interaction.followup.send("❌ Failed to send event announcement. Check logs.", ephemeral=True)
-        
+            await interaction.followup.send(
+                "❌ Failed to send event announcement. Check logs.", ephemeral=True
+            )
+
     except discord.errors.NotFound:
-        # Interaction already consumed - ignore this error
         pass
     except Exception as e:
         logger.error(f"Error in /eventannounce: {e}")
 
 @tree.command(name="reloadconfig", description="Reloads all configuration files (admin only)")
 async def reloadconfig(interaction: discord.Interaction):
-    global calendar, event_names, event_descriptions, reminder_config, bot_config
+    global bot_config, reminder_config, server_data
     try:
-        # Check admin permission
         if not is_admin(interaction.user.id):
             await interaction.response.send_message(
-                "❌ You don't have permission to use this command.",
-                ephemeral=True
+                "❌ You don't have permission to use this command.", ephemeral=True
             )
             return
 
-        # Defer immediately after permission check
         await interaction.response.defer(ephemeral=True)
-        
-        # Reload all configurations
-        calendar = load_calendar()
-        event_names = load_event_names()
-        event_descriptions = load_event_descriptions()
-        reminder_config = load_reminder_config()
+
         bot_config = load_bot_config()
-        
-        await interaction.followup.send("✅ All configuration files reloaded successfully!", ephemeral=True)
+        reminder_config = load_reminder_config()
+        server_data = load_all_server_data(bot_config)
+
+        await interaction.followup.send(
+            "✅ All configuration files reloaded successfully!", ephemeral=True
+        )
         logger.info(f"Configuration reloaded by {interaction.user}")
-        
+
     except discord.errors.NotFound:
-        # Interaction already consumed - ignore this error
         pass
     except Exception as e:
         logger.error(f"Error in /reloadconfig: {e}")
@@ -474,20 +488,17 @@ async def reloadconfig(interaction: discord.Interaction):
 @tree.command(name="botstatus", description="Shows bot health and status (admin only)")
 async def botstatus(interaction: discord.Interaction):
     try:
-        # Check admin permission
         if not is_admin(interaction.user.id):
             await interaction.response.send_message(
-                "❌ You don't have permission to use this command.",
-                ephemeral=True
+                "❌ You don't have permission to use this command.", ephemeral=True
             )
             return
 
-        # Defer immediately after permission check
         await interaction.response.defer(ephemeral=True)
 
         now = datetime.now(romania_tz)
         uptime = (now - bot_health.get("startup_time", now)).total_seconds() / 3600
-        
+
         embed = discord.Embed(
             title="🤖 Bot Status",
             color=discord.Color.green() if bot_health["is_healthy"] else discord.Color.red()
@@ -498,19 +509,28 @@ async def botstatus(interaction: discord.Interaction):
         embed.add_field(name="Uptime", value=f"{uptime:.2f} hours", inline=True)
         embed.add_field(name="Servers", value=f"{len(bot.guilds)}", inline=True)
         embed.add_field(name="Connection Losses", value=f"{bot_health['connection_losses']}", inline=True)
-        
+
         if bot_health["last_heartbeat"]:
             last_hb = (now - bot_health["last_heartbeat"]).total_seconds()
             embed.add_field(name="Last Heartbeat", value=f"{last_hb:.0f}s ago", inline=True)
-        
+
         if bot_health["last_task_run"]:
             last_task = (now - bot_health["last_task_run"]).total_seconds()
             embed.add_field(name="Last Task Run", value=f"{last_task:.0f}s ago", inline=True)
-        
+
+        # Show per-server status
+        for guild_id_str, srv_config in bot_config.get("servers", {}).items():
+            guild_id = int(guild_id_str)
+            last_post = last_daily_post_day.get(guild_id, "Never")
+            embed.add_field(
+                name=f"📡 {srv_config['name']}",
+                value=f"Last post day: {last_post}",
+                inline=True
+            )
+
         await interaction.followup.send(embed=embed, ephemeral=True)
-        
+
     except discord.errors.NotFound:
-        # Interaction already consumed - ignore this error
         pass
     except Exception as e:
         logger.error(f"Error in /botstatus: {e}")
@@ -521,9 +541,7 @@ async def reminder_post():
     global last_reminder_sent
     try:
         if not bot.is_ready():
-            logger.warning("Bot not ready, skipping reminder check")
             return
-            
         if not reminder_config.get("channel_id") or not reminder_config.get("times"):
             return
 
@@ -531,7 +549,6 @@ async def reminder_post():
         current_hour = now.hour
         current_minute = now.minute
 
-        # Prevent duplicate reminders in the same minute
         if last_reminder_sent["hour"] == current_hour and last_reminder_sent["minute"] == current_minute:
             return
 
@@ -552,7 +569,7 @@ async def reminder_post():
                     color=discord.Color.orange()
                 )
                 embed.set_footer(text="Reminder posted automatically")
-                
+
                 try:
                     await channel.send(embed=embed)
                     last_reminder_sent = {"hour": current_hour, "minute": current_minute}
@@ -571,7 +588,7 @@ async def before_reminder_post():
     await bot.wait_until_ready()
     logger.info("Reminder post task is ready")
 
-# === Bot events for connection monitoring ===
+# === Bot events ===
 @bot.event
 async def on_ready():
     bot_health["startup_time"] = datetime.now(romania_tz)
@@ -579,22 +596,29 @@ async def on_ready():
     logger.info(f"✅ Logged in as {bot.user}")
     logger.info(f"✅ Bot is in {len(bot.guilds)} server(s)")
     logger.info(f"✅ Discord.py version: {discord.__version__}")
-    
+
+    # Log which servers are configured vs joined
+    for guild in bot.guilds:
+        cfg = get_server_config(guild.id)
+        if cfg:
+            logger.info(f"✅ Configured server: {cfg['name']} ({guild.id})")
+        else:
+            logger.warning(f"⚠️ Bot is in unconfigured server: {guild.name} ({guild.id})")
+
     try:
         synced = await tree.sync()
         logger.info(f"✅ Synced {len(synced)} command(s)")
     except Exception as e:
         logger.error(f"Command sync error: {e}")
-    
-    # Start tasks
+
     if not health_check.is_running():
         health_check.start()
         logger.info("✅ Health check task started")
-    
+
     if not daily_event_post.is_running():
         daily_event_post.start()
         logger.info("✅ Daily event post task started")
-    
+
     if not reminder_post.is_running() and reminder_config.get("channel_id"):
         reminder_post.start()
         logger.info("✅ Reminder post task started")

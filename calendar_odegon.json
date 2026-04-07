@@ -1,0 +1,118 @@
+{
+    "EVENTS_CALENDAR" : {
+        "SEASONAL_EVENT" : {
+
+            "4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30" : [
+                { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "STONE_POWER_EVENT" : {
+
+            "2/3/4/11/18/25" : [
+                { "START_HOUR" : 10, "START_MINUTE" : 0, "END_HOUR" : 11, "END_MINUTE" : 59 },
+                { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 20, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "BOSS_POWER_EVENT" : {
+
+            "2/3/4/5/10/12/17/19/24/26" : [
+                { "START_HOUR" : 10, "START_MINUTE" : 0, "END_HOUR" : 11, "END_MINUTE" : 59 },
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "MOONLIGHT_CHEST_EVENT" : {
+
+            "3/5/10/17/24" : [
+                { "START_HOUR" : 21, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "GOLD_DROP_FESTIVAL_EVENT" : {
+
+            "1/3/4/5/7/9/11/13/15/17/19/21/23/25/27/29" : [
+                { "START_HOUR" : 13, "START_MINUTE" : 0, "END_HOUR" : 13, "END_MINUTE" : 59 },
+                { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 20, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "EXPERIENCE_FESTIVAL_EVENT" : {
+
+            "2/4/6/8/10/12/14/16/18/20/22/24/26/28/30" : [
+                { "START_HOUR" : 13, "START_MINUTE" : 0, "END_HOUR" : 13, "END_MINUTE" : 59 },
+                { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 20, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "DROP_ITEM_FESTIVAL_EVENT" : {
+
+            "4/5/7/14/22/28/29" : [
+                { "START_HOUR" : 14, "START_MINUTE" : 0, "END_HOUR" : 14, "END_MINUTE" : 59 },
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "LEGENDARY_FISH_EVENT" : {
+
+            "3" : [
+                { "START_HOUR" : 23, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 30 }
+            ]
+        },
+
+        "COR_DRACONIS_EVENT" : {
+
+            "3/12/26" : [
+                { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 19, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "JIGSAW_EVENT" : {
+
+            "3/10/17/24" : [
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 30 }
+            ]
+        },
+
+        "HEXAGONAL_CHEST_EVENT" : {
+
+            "4/11/18/25" : [
+                { "START_HOUR" : 21, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "SPIN_WHEEL_EVENT" : {
+
+            "4/11/18/25" : [
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "SECRET_MAPS_EVENT" : {
+
+            "9/12/16/19/23/26/30" : [
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "HIDDEN_NPC_EVENT" : {
+
+            "4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30" : [
+                { "START_HOUR" : 12, "START_MINUTE" : 0, "END_HOUR" : 12, "END_MINUTE" : 29 },
+                { "START_HOUR" : 13, "START_MINUTE" : 0, "END_HOUR" : 13, "END_MINUTE" : 29 },
+                { "START_HOUR" : 14, "START_MINUTE" : 0, "END_HOUR" : 14, "END_MINUTE" : 29 },
+                { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 20, "END_MINUTE" : 29 },
+                { "START_HOUR" : 21, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 29 },
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 29 }
+            ]
+        },
+
+        "EXORCISM_SCROLL_EVENT" : {
+
+            "5/8/19/22" : [
+                { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 19, "END_MINUTE" : 59 }
+            ]
+        }
+    }
+}

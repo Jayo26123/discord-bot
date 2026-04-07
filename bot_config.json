@@ -1,0 +1,25 @@
+{
+    "admin_user_ids": [
+      550768541767565300
+    ],
+    "servers": {
+      "1069236902978387968": {
+        "name": "Rodnia",
+        "daily_event_channel_id": 1130645960113000400,
+        "daily_event_hour": 10,
+        "daily_event_minute": 0,
+        "calendar_file": "calendar_rodnia.json",
+        "event_names_file": "event_names_rodnia.json",
+        "event_descriptions_file": "event_descriptions_rodnia.json"
+      },
+      "1467961561963298818": {
+        "name": "Odegon",
+        "daily_event_channel_id": 1467961564744126500,
+        "daily_event_hour": 10,
+        "daily_event_minute": 0,
+        "calendar_file": "calendar_odegon.json",
+        "event_names_file": "event_names_odegon.json",
+        "event_descriptions_file": "event_descriptions_odegon.json"
+      }
+    }
+  }
