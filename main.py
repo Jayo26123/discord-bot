@@ -174,40 +174,64 @@ def check_events_for_day(day: int, guild_id: int) -> list[dict]:
     return list(events_dict.values())
 
 
-def create_events_embed(title: str, events: list[dict], image_url: str = None) -> discord.Embed:
-    embed = discord.Embed(
-        title=title,
-        color=discord.Color.from_rgb(30, 31, 34)
-    )
+def check_events_for_day(day: int, guild_id: int) -> list[dict]:
+    data = get_server_data(guild_id)
+    if not data:
+        return []
 
-    for i, event in enumerate(events):
-        # Build time slots text
-        slots_text = ""
-        for slot in event["slots"]:
-            slots_text += f"`{slot['time']}` ({slot['duration']})\n"
+    calendar = data["calendar"]
+    event_names = data["event_names"]
+    event_descriptions = data["event_descriptions"]
 
-        # Add separator EXCEPT for last event
-        separator = "\n━━━━━━━━━━━━━━━━━━━━━━━⊱⋆⊰━━━━━━━━━━━━━━━━━━━━━━━\n" if i < len(events) - 1 else ""
+    events_dict = {}
 
-        value = (
-            f"**Description:**\n{event['description']}\n"
-            f"**Schedule:**\n{slots_text}"
-            f"{separator}"
-        )
+    for code, dates in calendar.items():
+        name = event_names.get(code, code)
+        description = event_descriptions.get(code, "No description available.").strip()
 
-        embed.add_field(
-            name=f"📌 {event['name']}",
-            value=value,
-            inline=False
-        )
+        for days_str, timings in dates.items():
+            if str(day) in days_str.split("/"):
+                if code not in events_dict:
+                    events_dict[code] = {
+                        "name": name,
+                        "description": description,
+                        "slots": []
+                    }
 
-    if image_url:
-        embed.set_image(url=image_url)
+                for t in timings:
+                    start_str = f"{t['START_HOUR']:02}:{t['START_MINUTE']:02}"
+                    end_str   = f"{t['END_HOUR']:02}:{t['END_MINUTE']:02}"
 
-    embed.set_footer(text="Automatically generated event schedule")
-    embed.timestamp = datetime.utcnow()
+                    start_dt = datetime(2026, 1, 1, t['START_HOUR'], t['START_MINUTE'])
+                    end_dt   = datetime(2026, 1, 1, t['END_HOUR'], t['END_MINUTE'])
+                    minutes = int((end_dt - start_dt).total_seconds() / 60)
 
-    return embed
+                    # If END_MINUTE == 59, the event lasts until the end of that hour
+                    # => round up to the nearest full hour
+                    if t['END_MINUTE'] == 59:
+                        actual_minutes = (t['END_HOUR'] - t['START_HOUR']) * 60 + (60 - t['START_MINUTE'])
+                    else:
+                        actual_minutes = minutes
+
+                    # Round to the nearest multiple of 5
+                    rounded = round(actual_minutes / 5) * 5
+
+                    if rounded < 60:
+                        duration_str = f"{rounded} min"
+                    elif rounded % 60 == 0:
+                        hours = rounded // 60
+                        duration_str = f"{hours} hour{'s' if hours > 1 else ''}"
+                    else:
+                        hours = rounded // 60
+                        mins = rounded % 60
+                        duration_str = f"{hours}h {mins}min"
+
+                    events_dict[code]["slots"].append({
+                        "time": f"{start_str} – {end_str}",
+                        "duration": duration_str
+                    })
+
+    return list(events_dict.values())
 
 
 def is_admin(user_id: int) -> bool:
