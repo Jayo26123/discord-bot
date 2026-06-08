@@ -7,6 +7,29 @@
             ]
         },
 
+        "MYTHICAL_BOSSES_EVENT" : {
+
+            "5/7/9/12/14/16/19/21/23/26/28" : [
+                { "START_HOUR" : 11, "START_MINUTE" : 0, "END_HOUR" : 11, "END_MINUTE" : 59 },
+                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "SEASONAL_WHEEL_EVENT" : {
+
+            "6/7/13/14/20/21/27/28" : [
+                { "START_HOUR" : 10, "START_MINUTE" : 0, "END_HOUR" : 13, "END_MINUTE" : 59 },
+                { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
+            ]
+        },
+
+        "SEASONAL_EVENT" : {
+
+            "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30/31" : [
+                { "START_HOUR" : 0, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
+            ]
+        },
+
         "KINGDOM_WAR_FLAG_EVENT" : {
             
             "7/14/21/28" : [
