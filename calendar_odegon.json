@@ -10,7 +10,7 @@
 
         "MYTHICAL_BOSSES_EVENT" : {
 
-            "5/7/9/12/14/16/19/21/23/26/28" : [
+            "3/5/10/12/17/19/24/26/31" : [
                 { "START_HOUR" : 11, "START_MINUTE" : 0, "END_HOUR" : 11, "END_MINUTE" : 59 },
                 { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
             ]
@@ -55,22 +55,8 @@
 
         "MOONLIGHT_CHEST_EVENT" : {
 
-            "2/6/9/13/16/120/23/27/30" : [
+            "4/7/11/14/18/21/25/28" : [
                 { "START_HOUR" : 21, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 59 }
-            ]
-        },
-
-        "DOUBLE_DROP_STONE_EVENT" : {
-
-            "1" : [
-                { "START_HOUR" : 20, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 59 }
-            ]
-        },
-
-        "DOUBLE_DROP_BOSS_EVENT" : {
-
-            "1" : [
-                { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         },
 
@@ -100,56 +86,56 @@
 
         "DOUBLE_DROP_MINING_EVENT" : {
 
-            "6/13/20/27" : [
+            "4/11/18/25" : [
                 { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 19, "END_MINUTE" : 59 }
             ]
         },
 
         "DOUBLE_DROP_GATHERING_EVENT" : {
 
-            "7/14/21/28" : [
+            "5/12/19/26" : [
                 { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 19, "END_MINUTE" : 59 }
             ]
         },
 
         "LEGENDARY_FISH_EVENT" : {
 
-            "6/13/20/27" : [
+            "4/11/18/25" : [
                 { "START_HOUR" : 23, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 30 }
             ]
         },
 
         "COR_DRACONIS_EVENT" : {
 
-            "7/14/21/28"  : [
+            "5/12/19/26"  : [
                 { "START_HOUR" : 19, "START_MINUTE" : 0, "END_HOUR" : 19, "END_MINUTE" : 59 }
             ]
         },
 
         "JIGSAW_EVENT" : {
 
-            "5/12/19/26" : [
+            "3/10/17/24/31" : [
                 { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 30 }
             ]
         },
 
         "HEXAGONAL_CHEST_EVENT" : {
 
-            "1/8/15/22/29" : [
+            "6/13/20/27" : [
                 { "START_HOUR" : 21, "START_MINUTE" : 0, "END_HOUR" : 21, "END_MINUTE" : 59 }
             ]
         },
 
         "SPIN_WHEEL_EVENT" : {
 
-            "3/10/17/24" : [
+            "1/8/15/22/29" : [
                 { "START_HOUR" : 22, "START_MINUTE" : 0, "END_HOUR" : 22, "END_MINUTE" : 59 }
             ]
         },
 
         "SECRET_MAPS_EVENT" : {
 
-            "5/12/19/26" : [
+            "3/10/17/24/31" : [
                 { "START_HOUR" : 23, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
         }
