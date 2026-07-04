@@ -248,8 +248,15 @@ async def send_daily_event_post(guild_id: int) -> bool:
         image_url=image_url
     )
 
+    role_id = srv_config.get("daily_event_role_id")
+    mention_text = f"<@&{role_id}>" if role_id else ""
+
     try:
-        await channel.send("@everyone", embed=embed)
+        await channel.send(
+            mention_text,
+            embed=embed,
+            allowed_mentions=discord.AllowedMentions(roles=True)
+        )
         logger.info(f"[{srv_config.get('name', guild_id)}] Daily event sent")
         return True
     except Exception as e:
