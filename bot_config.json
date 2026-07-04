@@ -6,6 +6,7 @@
       "1069236902978387968": {
         "name": "Rodnia",
         "daily_event_channel_id": 1130645960113000498,
+        "daily_event_role_id": 1069236902978387972,
         "daily_event_hour": 10,
         "daily_event_minute": 0,
         "calendar_file": "calendar_rodnia.json",
@@ -16,6 +17,7 @@
       "1467961561963298818": {
         "name": "Odegon",
         "daily_event_channel_id": 1482693516508266518,
+        "daily_event_role_id": 1467961562307498242,
         "daily_event_hour": 10,
         "daily_event_minute": 0,
         "calendar_file": "calendar_odegon.json",
