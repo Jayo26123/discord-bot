@@ -167,7 +167,7 @@
 
         "DOUBLE_DROP_BOSS_EVENT" : {
 
-            "9/23" : [
+            "6/9/13/20/23/27" : [
                 { "START_HOUR" : 13, "START_MINUTE" : 0, "END_HOUR" : 13, "END_MINUTE" : 59 },
                 { "START_HOUR" : 23, "START_MINUTE" : 0, "END_HOUR" : 23, "END_MINUTE" : 59 }
             ]
